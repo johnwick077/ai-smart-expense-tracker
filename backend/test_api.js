@@ -373,8 +373,7 @@ ImportHistory.countDocuments = async () => db.imports.length;
 const app = require('./server');
 
 let server;
-const TEST_PORT = process.env.TEST_PORT || 5002;
-let baseUrl = `http://localhost:${TEST_PORT}/api`;
+let baseUrl = 'http://localhost:5000/api';
 let userToken = '';
 let adminToken = '';
 let createdExpenseId = '';
@@ -471,10 +470,12 @@ const runTests = async () => {
   console.log('======================================================\n');
 
   try {
-    // Start Express Test Server
+    // Start Express Test Server on ephemeral free port
     await new Promise((resolve, reject) => {
-      server = app.listen(TEST_PORT, () => {
-        console.log(`[Test Setup] Express test server listening at ${baseUrl}\n`);
+      server = app.listen(0, () => {
+        const port = server.address().port;
+        baseUrl = `http://localhost:${port}/api`;
+        console.log(`[Test Setup] Express test server listening on ephemeral port at ${baseUrl}\n`);
         resolve();
       });
       server.on('error', reject);

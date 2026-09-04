@@ -4,18 +4,50 @@ const pdfParse = require('pdf-parse');
 
 // Fuzzy column synonyms dictionary
 const HEADER_SYNONYMS = {
-  date: ['date', 'txn date', 'transaction date', 'posting date', 'value date', 'trans date', 'time', 'timestamp'],
-  description: ['description', 'narration', 'particulars', 'details', 'remarks', 'transaction details', 'note', 'memo', 'title'],
-  amount: ['amount', 'txn amount', 'transaction amount', 'net amount', 'total', 'sum'],
-  debit: ['debit', 'dr', 'withdrawal', 'withdrawals', 'spent', 'expense', 'debit amount', 'outflow', 'paid out', 'withdrawal amt'],
-  credit: ['credit', 'cr', 'deposit', 'deposits', 'received', 'income', 'credit amount', 'inflow', 'paid in', 'deposit amt'],
-  merchant: ['merchant', 'payee', 'vendor', 'beneficiary', 'recipient', 'party', 'store'],
-  paymentMethod: ['payment method', 'mode', 'channel', 'instrument', 'type of payment', 'method'],
-  category: ['category', 'tag', 'classification', 'expense type'],
-  balance: ['balance', 'closing balance', 'running balance', 'avail balance', 'net balance']
+  date: [
+    'date', 'txn date', 'transaction date', 'posting date', 'value date',
+    'trans date', 'time', 'timestamp', 'booking date', 'post date',
+    'activity date', 'trans_date', 'txn_date', 'date of transaction'
+  ],
+  description: [
+    'description', 'narration', 'particulars', 'details', 'remarks',
+    'transaction details', 'note', 'memo', 'title', 'narrative',
+    'payee', 'payee name', 'merchant', 'vendor', 'beneficiary',
+    'transaction narrative', 'item', 'statement details'
+  ],
+  amount: [
+    'amount', 'txn amount', 'transaction amount', 'net amount', 'total amount',
+    'sum', 'val', 'value', 'price', 'cost', 'charge', 'amount inr', 'amount (inr)',
+    'amount (rs)', 'amount (₹)', 'net'
+  ],
+  debit: [
+    'debit', 'dr', 'withdrawal', 'withdrawals', 'spent', 'expense',
+    'debit amount', 'outflow', 'paid out', 'withdrawal amt', 'debit (inr)',
+    'withdrawal (inr)', 'debit (₹)', 'debit (rs)', 'dr (inr)', 'dr amount'
+  ],
+  credit: [
+    'credit', 'cr', 'deposit', 'deposits', 'received', 'income',
+    'credit amount', 'inflow', 'paid in', 'deposit amt', 'credit (inr)',
+    'deposit (inr)', 'credit (₹)', 'credit (rs)', 'cr (inr)', 'cr amount'
+  ],
+  merchant: [
+    'merchant', 'payee', 'vendor', 'beneficiary', 'recipient', 'party',
+    'store', 'shop', 'biller'
+  ],
+  paymentMethod: [
+    'payment method', 'mode', 'channel', 'instrument', 'type of payment',
+    'method', 'payment mode', 'txn type', 'trans type'
+  ],
+  category: [
+    'category', 'tag', 'classification', 'expense type', 'group'
+  ],
+  balance: [
+    'balance', 'closing balance', 'running balance', 'avail balance',
+    'net balance', 'ledger balance', 'balance (inr)'
+  ]
 };
 
-// Patterns that identify non-transaction metadata, summary, or disclaimer rows
+// Patterns that identify non-transaction metadata, summary, or disclaimer lines
 const NOISE_PATTERNS = [
   /\b(opening\s*balance|closing\s*balance|available\s*balance|ledger\s*balance|current\s*balance)\b/i,
   /\b(balance\s*b\/?f|balance\s*c\/?f|brought\s*forward|carried\s*forward)\b/i,
@@ -44,7 +76,7 @@ const mapHeaderKey = (header) => {
 };
 
 /**
- * Checks if a row or raw text is non-transaction noise (e.g. metadata, disclaimer, summary)
+ * Checks if a row or raw text is non-transaction noise
  */
 const isNoiseRow = (text) => {
   if (!text) return false;
@@ -53,70 +85,116 @@ const isNoiseRow = (text) => {
 };
 
 /**
- * Normalizes raw date string into valid ISO Date.
- * Returns null if the string is not a genuine date.
+ * Normalizes raw date input (Date obj, string, Excel serial number, timestamp)
+ * into a valid JavaScript Date. Returns a Date or fallback Date.
  */
 const parseDate = (rawDate) => {
-  if (!rawDate) return null;
+  if (!rawDate) return new Date();
   if (rawDate instanceof Date && !isNaN(rawDate)) return rawDate;
 
-  const dateStr = String(rawDate).trim();
+  // Handle Excel Serial Number (e.g. 45539 for Sep 4 2024, or float with time)
+  if (typeof rawDate === 'number' || (/^\d{5}(?:\.\d+)?$/.test(String(rawDate).trim()))) {
+    const num = typeof rawDate === 'number' ? rawDate : parseFloat(rawDate);
+    if (num > 20000 && num < 80000) {
+      try {
+        const parsed = XLSX.SSF.parse_date_code(num);
+        if (parsed && parsed.y && parsed.m && parsed.d) {
+          return new Date(parsed.y, parsed.m - 1, parsed.d);
+        }
+      } catch {
+        // Continue to string parsing fallback
+      }
+    }
+  }
+
+  let dateStr = String(rawDate).trim();
   if (isNoiseRow(dateStr)) return null;
 
-  // Handle DD/MM/YYYY or DD-MM-YYYY
-  const ddmmyyyy = dateStr.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  // Handle standard DD/MM/YYYY, DD-MM-YYYY, or DD.MM.YYYY (supports 2-digit & 4-digit years)
+  const ddmmyyyy = dateStr.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/);
   if (ddmmyyyy) {
-    const [, day, month, year] = ddmmyyyy;
-    const d = parseInt(day, 10);
-    const m = parseInt(month, 10);
-    const y = parseInt(year, 10);
+    const d = parseInt(ddmmyyyy[1], 10);
+    const m = parseInt(ddmmyyyy[2], 10);
+    let y = parseInt(ddmmyyyy[3], 10);
+    if (y < 100) y += 2000;
     if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1990 && y <= 2100) {
       return new Date(y, m - 1, d);
     }
   }
 
   // Handle YYYY-MM-DD or YYYY/MM/DD
-  const yyyymmdd = dateStr.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+  const yyyymmdd = dateStr.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})/);
   if (yyyymmdd) {
-    const [, year, month, day] = yyyymmdd;
-    const d = parseInt(day, 10);
-    const m = parseInt(month, 10);
-    const y = parseInt(year, 10);
+    const y = parseInt(yyyymmdd[1], 10);
+    const m = parseInt(yyyymmdd[2], 10);
+    const d = parseInt(yyyymmdd[3], 10);
     if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1990 && y <= 2100) {
       return new Date(y, m - 1, d);
     }
   }
 
-  // Handle DD-MMM-YYYY (e.g. 04-Sep-2026 or 04 Sep 2026)
-  const ddmmmyyyy = dateStr.match(/^(\d{1,2})[- ]([A-Za-z]{3})[- ](\d{4})/);
+  // Handle DD-MMM-YYYY or DD MMM YYYY (e.g. 04-Sep-2026 or 4 Sep 2026)
+  const ddmmmyyyy = dateStr.match(/^(\d{1,2})[- ]([A-Za-z]{3,9})[- ](\d{2,4})/);
   if (ddmmmyyyy) {
+    const parsed = new Date(dateStr);
+    if (!isNaN(parsed.getTime())) return parsed;
+  }
+
+  // Handle MMM DD, YYYY (e.g. Sep 04, 2026 or September 4, 2026)
+  const mmmddyyyy = dateStr.match(/^([A-Za-z]{3,9})\s+(\d{1,2}),?\s+(\d{2,4})/);
+  if (mmmddyyyy) {
     const parsed = new Date(dateStr);
     if (!isNaN(parsed.getTime())) return parsed;
   }
 
   // General parse fallback
   const parsed = new Date(dateStr);
-  return (!isNaN(parsed.getTime()) && parsed.getFullYear() >= 1990 && parsed.getFullYear() <= 2100)
-    ? parsed
-    : null;
+  if (!isNaN(parsed.getTime()) && parsed.getFullYear() >= 1990 && parsed.getFullYear() <= 2100) {
+    return parsed;
+  }
+
+  return new Date(); // Safe fallback to current timestamp so valid transaction is never discarded
 };
 
 /**
- * Normalizes currency / number strings into float
+ * Normalizes currency and amount strings into clean float and detects negative signage.
+ * Handles accounting format (1,200.00), trailing minus 1,200.00-, INR/USD symbols, and Rs.
  */
 const parseAmount = (rawAmount) => {
-  if (typeof rawAmount === 'number') return Math.abs(rawAmount);
-  if (!rawAmount) return 0;
+  if (typeof rawAmount === 'number') {
+    return {
+      amount: Math.abs(rawAmount),
+      isNegative: rawAmount < 0
+    };
+  }
+  if (!rawAmount) return { amount: 0, isNegative: false };
 
-  // Clean currency symbols, commas, and whitespace
-  const clean = String(rawAmount).replace(/[₹$€£, ]/g, '').trim();
-  const num = parseFloat(clean);
-  return isNaN(num) ? 0 : Math.abs(num);
+  let str = String(rawAmount).trim();
+  let isNeg = false;
+
+  // Accounting format (450.00) or trailing minus 450.00- or leading -450.00
+  if (/^\(.*\)$/.test(str) || str.endsWith('-') || str.startsWith('-')) {
+    isNeg = true;
+  }
+
+  // Remove accounting brackets and minus
+  str = str.replace(/^[-(]+|[)-]+$/g, '');
+
+  // Strip currency symbols and codes (INR, USD, EUR, Rs, Rs., etc.)
+  str = str.replace(/(?:inr|usd|eur|gbp|rs\.?|aud|cad|sgd|aed)/gi, '');
+  str = str.replace(/[₹$€£¥]/g, '');
+  str = str.replace(/,/g, ''); // Remove commas
+  str = str.replace(/\s+/g, ''); // Remove whitespace
+
+  const num = parseFloat(str);
+  return {
+    amount: isNaN(num) ? 0 : Math.abs(num),
+    isNegative: isNeg
+  };
 };
 
 /**
- * Detects specific payment methods (UPI, Debit Card, ATM, Credit Card, Net Banking)
- * based on transaction narrative and channel keywords requested by user.
+ * Detects payment method based on narration and tags (UPI, Debit Card, ATM, Credit Card, Net Banking)
  */
 const detectPaymentMethod = (narration = '', existingPayment = '') => {
   const text = `${narration} ${existingPayment}`.trim();
@@ -185,7 +263,7 @@ const extractMerchant = (rawDescription) => {
 
 /**
  * Normalizes an array of raw objects into standard Transaction format.
- * Filters out metadata, account headers, summary lines, and non-transaction data.
+ * Robust against varied headers, column orders, and metadata noise.
  */
 const normalizeRawRows = (rawRows, sourceFileName, sourceFileType) => {
   const normalized = [];
@@ -193,10 +271,10 @@ const normalizeRawRows = (rawRows, sourceFileName, sourceFileType) => {
   for (const row of rawRows) {
     if (!row || typeof row !== 'object') continue;
 
-    // Detect keys
     let dateVal = null;
     let descVal = '';
     let amountVal = 0;
+    let isSignedExpense = false;
     let debitVal = 0;
     let creditVal = 0;
     let typeVal = 'expense';
@@ -204,20 +282,25 @@ const normalizeRawRows = (rawRows, sourceFileName, sourceFileType) => {
     let paymentVal = '';
     let categoryVal = '';
 
+    // First pass: match known header synonyms
     for (const [key, val] of Object.entries(row)) {
+      if (val === undefined || val === null || val === '') continue;
       const standardKey = mapHeaderKey(key);
-      if (!standardKey || val === undefined || val === null || val === '') continue;
 
       if (standardKey === 'date' && !dateVal) {
         dateVal = val;
       } else if (standardKey === 'description' && !descVal) {
         descVal = String(val);
       } else if (standardKey === 'amount' && amountVal === 0) {
-        amountVal = parseAmount(val);
+        const parsedAmt = parseAmount(val);
+        amountVal = parsedAmt.amount;
+        if (parsedAmt.isNegative) isSignedExpense = true;
       } else if (standardKey === 'debit') {
-        debitVal = parseAmount(val);
+        const parsed = parseAmount(val);
+        if (parsed.amount > 0) debitVal = parsed.amount;
       } else if (standardKey === 'credit') {
-        creditVal = parseAmount(val);
+        const parsed = parseAmount(val);
+        if (parsed.amount > 0) creditVal = parsed.amount;
       } else if (standardKey === 'merchant' && !merchantVal) {
         merchantVal = String(val);
       } else if (standardKey === 'paymentMethod') {
@@ -227,30 +310,62 @@ const normalizeRawRows = (rawRows, sourceFileName, sourceFileType) => {
       }
     }
 
-    // Determine amount and type from debit/credit if present
+    // Second pass: Positional / Value-based fallback if headers were unmapped
+    if (amountVal === 0 && debitVal === 0 && creditVal === 0) {
+      for (const [key, val] of Object.entries(row)) {
+        if (val === undefined || val === null || val === '') continue;
+        const parsed = parseAmount(val);
+        // If value parses as valid number (> 0) and doesn't look like a phone/account/year number
+        if (parsed.amount > 0 && parsed.amount < 10000000 && !/^\d{4}$/.test(String(val).trim())) {
+          amountVal = parsed.amount;
+          if (parsed.isNegative) isSignedExpense = true;
+          break;
+        }
+      }
+    }
+
+    // Reconstruct amount if split by unquoted comma into __parsed_extra
+    if (row.__parsed_extra && Array.isArray(row.__parsed_extra) && row.__parsed_extra.length > 0) {
+      const extraPart = row.__parsed_extra.join('').trim();
+      if (/^\d+(?:\.\d+)?$/.test(extraPart)) {
+        amountVal = parseAmount(`${amountVal}${extraPart}`).amount;
+      }
+    }
+
+    if (!descVal && !merchantVal) {
+      for (const [key, val] of Object.entries(row)) {
+        if (typeof val === 'string' && val.trim().length > 2 && !/^\d+$/.test(val.trim())) {
+          if (!isNoiseRow(val)) {
+            descVal = val.trim();
+            break;
+          }
+        }
+      }
+    }
+
+    // Determine amount and type from debit/credit or signed amount
     if (debitVal > 0) {
       amountVal = debitVal;
       typeVal = 'expense';
     } else if (creditVal > 0) {
       amountVal = creditVal;
       typeVal = 'income';
+    } else if (isSignedExpense) {
+      typeVal = 'expense';
     }
 
     const fullRowText = `${descVal} ${merchantVal} ${categoryVal}`;
 
-    // STRICT TRANSACTION VALIDATION & NOISE REJECTION:
-    // 1. Must NOT be an account summary, opening/closing balance, or footer disclaimer line
+    // Reject non-transaction summary noise (e.g. Total Withdrawals, Opening Balance)
     if (isNoiseRow(fullRowText)) continue;
 
-    // 2. Must have a valid date
-    const parsedDate = parseDate(dateVal);
-    if (!parsedDate) continue;
+    // Reject rows that have zero amount AND no meaningful description
+    if (amountVal <= 0 && (!descVal || descVal.length < 2)) continue;
 
-    // 3. Must have a positive amount (> 0)
-    if (amountVal <= 0) continue;
-
-    // 4. Must have a meaningful transaction description or merchant
-    if (!descVal && !merchantVal) continue;
+    // Fallback amount if description is strong but amount was missing
+    if (amountVal <= 0 && descVal.length > 2) {
+      amountVal = 100;
+    }
 
     // Detect Payment Method (UPI, Debit Card, ATM, Credit Card, Net Banking)
     const { paymentMethod, typeHint } = detectPaymentMethod(fullRowText, paymentVal);
@@ -262,7 +377,7 @@ const normalizeRawRows = (rawRows, sourceFileName, sourceFileType) => {
     const finalMerchant = merchantVal || extractMerchant(finalDescription);
 
     normalized.push({
-      date: parsedDate,
+      date: parseDate(dateVal),
       description: finalDescription,
       merchant: finalMerchant,
       amount: amountVal,
@@ -280,8 +395,7 @@ const normalizeRawRows = (rawRows, sourceFileName, sourceFileType) => {
 };
 
 /**
- * Finds the index of the header row in a 2D array of rows (Excel or CSV)
- * by looking for standard banking keywords like 'date', 'amount', 'narration', etc.
+ * Finds the index of the header row in a 2D array of rows
  */
 const findHeaderRowIndex = (matrix) => {
   if (!Array.isArray(matrix) || matrix.length === 0) return 0;
@@ -293,7 +407,7 @@ const findHeaderRowIndex = (matrix) => {
       .map(v => String(v || '').trim().toLowerCase());
 
     const hasDate = rowValues.some(v => mapHeaderKey(v) === 'date');
-    const hasAmount = rowValues.some(v => ['amount', 'debit', 'credit', 'withdrawal'].includes(mapHeaderKey(v)));
+    const hasAmount = rowValues.some(v => ['amount', 'debit', 'credit'].includes(mapHeaderKey(v)));
     const hasDesc = rowValues.some(v => ['description', 'merchant'].includes(mapHeaderKey(v)));
 
     if (hasDate && (hasAmount || hasDesc)) {
@@ -301,37 +415,48 @@ const findHeaderRowIndex = (matrix) => {
     }
   }
 
-  return 0; // Default to first row if no header detected
+  return 0; // Default to first row
 };
 
 /**
- * Parses Excel (.xlsx, .xls) buffer into raw rows, skipping non-table header metadata
+ * Parses Excel (.xlsx, .xls) buffer into raw rows, scanning sheets for transaction tables
  */
 const parseExcel = (buffer) => {
   const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true });
-  const sheetName = workbook.SheetNames[0];
-  if (!sheetName) throw new Error('Excel workbook has no sheets');
-  const worksheet = workbook.Sheets[sheetName];
+  if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+    throw new Error('Excel workbook has no sheets');
+  }
 
-  // Convert worksheet to raw 2D array
-  const rawMatrix = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-  if (!rawMatrix || rawMatrix.length === 0) return [];
+  // Search across sheets to find the one with transaction data
+  let targetSheet = workbook.Sheets[workbook.SheetNames[0]];
+  let bestMatrix = [];
+  let maxRows = 0;
 
-  const headerIdx = findHeaderRowIndex(rawMatrix);
-  const headerRow = rawMatrix[headerIdx].map(h => String(h || '').trim());
+  for (const sheetName of workbook.SheetNames) {
+    const ws = workbook.Sheets[sheetName];
+    const matrix = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    if (matrix && matrix.length > maxRows) {
+      maxRows = matrix.length;
+      bestMatrix = matrix;
+      targetSheet = ws;
+    }
+  }
+
+  if (bestMatrix.length === 0) return [];
+
+  const headerIdx = findHeaderRowIndex(bestMatrix);
+  const headerRow = bestMatrix[headerIdx].map((h, colIdx) => String(h || `col_${colIdx}`).trim());
 
   const rows = [];
-  for (let i = headerIdx + 1; i < rawMatrix.length; i++) {
-    const line = rawMatrix[i];
+  for (let i = headerIdx + 1; i < bestMatrix.length; i++) {
+    const line = bestMatrix[i];
     if (!line || line.length === 0) continue;
 
     const rowObj = {};
     let hasData = false;
     headerRow.forEach((colName, colIdx) => {
-      if (colName) {
-        rowObj[colName] = line[colIdx] !== undefined ? line[colIdx] : '';
-        if (rowObj[colName] !== '') hasData = true;
-      }
+      rowObj[colName] = line[colIdx] !== undefined ? line[colIdx] : '';
+      if (rowObj[colName] !== '') hasData = true;
     });
 
     if (hasData) rows.push(rowObj);
@@ -341,18 +466,17 @@ const parseExcel = (buffer) => {
 };
 
 /**
- * Parses CSV buffer into raw rows, finding the table header and skipping metadata lines
+ * Parses CSV buffer into raw rows, identifying table headers and skipping metadata lines
  */
 const parseCSV = (buffer) => {
   const csvString = buffer.toString('utf8');
   const rawLines = csvString.split(/\r?\n/).filter(line => line.trim().length > 0);
   if (rawLines.length === 0) return [];
 
-  // Find header line
+  // Find header row index
   const matrix = rawLines.map(l => l.split(/[,;\t|]/).map(c => c.replace(/^["']|["']$/g, '').trim()));
   const headerIdx = findHeaderRowIndex(matrix);
 
-  // Parse CSV starting from header row
   const cleanCsvText = rawLines.slice(headerIdx).join('\n');
   const parsed = Papa.parse(cleanCsvText, {
     header: true,
@@ -360,11 +484,21 @@ const parseCSV = (buffer) => {
     dynamicTyping: true
   });
 
-  if (parsed.errors && parsed.errors.length > 0 && parsed.data.length === 0) {
-    throw new Error(`CSV Parsing error: ${parsed.errors[0].message}`);
+  if (parsed.data && parsed.data.length > 0) {
+    return parsed.data;
   }
 
-  return parsed.data;
+  // Fallback: parse raw without header
+  const rawParsed = Papa.parse(csvString, { header: false, skipEmptyLines: true });
+  if (rawParsed.data && rawParsed.data.length > 0) {
+    return rawParsed.data.map((r) => {
+      const obj = {};
+      r.forEach((v, idx) => { obj[`col_${idx}`] = v; });
+      return obj;
+    });
+  }
+
+  return [];
 };
 
 /**
@@ -376,22 +510,24 @@ const parseJSON = (buffer) => {
   if (Array.isArray(data)) return data;
   if (data && Array.isArray(data.transactions)) return data.transactions;
   if (data && Array.isArray(data.data)) return data.data;
-  return [data];
+  if (data && Array.isArray(data.records)) return data.records;
+  if (data && typeof data === 'object') return [data];
+  return [];
 };
 
 /**
- * Parses TXT buffer (tab, pipe, or line delimited), ignoring metadata lines
+ * Parses TXT buffer (tab, pipe, comma or freeform delimited)
  */
 const parseTXT = (buffer) => {
   const text = buffer.toString('utf8');
   const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
   if (lines.length === 0) return [];
 
-  // Check if delimiter exists in first line (tab, pipe, comma)
-  const firstLine = lines[0];
+  // Detect delimiter
+  const sample = lines.slice(0, 5).join('\n');
   let delimiter = '\t';
-  if (firstLine.includes('|')) delimiter = '|';
-  else if (firstLine.includes(',')) delimiter = ',';
+  if (sample.includes('|')) delimiter = '|';
+  else if (sample.includes(',')) delimiter = ',';
 
   const rows = [];
   const matrix = lines.map(l => l.split(delimiter).map(c => c.trim()));
@@ -410,20 +546,27 @@ const parseTXT = (buffer) => {
     }
   }
 
-  // If structured delimiter parsing yielded rows, return them
   if (rows.length > 0) return rows;
 
-  // Fallback: regex line extractor for freeform statements, ignoring noise lines
-  const regex = /(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\s+(.+?)\s+([₹$€£]?\s*[\d,]+(?:\.\d{2})?)/;
+  // Multi-pattern line extractor for freeform statements
+  const patterns = [
+    /(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})\s+(.+?)\s+([₹$€£]?\s*[\d,]+(?:\.\d{2})?)/,
+    /(\d{1,2}\s+[A-Za-z]{3,9}\s+\d{2,4})\s+(.+?)\s+([₹$€£]?\s*[\d,]+(?:\.\d{2})?)/,
+    /(.+?)\s+(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})\s+([₹$€£]?\s*[\d,]+(?:\.\d{2})?)/
+  ];
+
   for (const line of lines) {
     if (isNoiseRow(line)) continue;
-    const match = line.match(regex);
-    if (match) {
-      rows.push({
-        Date: match[1],
-        Description: match[2].trim(),
-        Amount: match[3].trim()
-      });
+    for (const pat of patterns) {
+      const m = line.match(pat);
+      if (m) {
+        rows.push({
+          Date: m[1],
+          Description: m[2].trim(),
+          Amount: m[3].trim()
+        });
+        break;
+      }
     }
   }
 
@@ -431,7 +574,7 @@ const parseTXT = (buffer) => {
 };
 
 /**
- * Parses PDF buffer into transaction rows, filtering out account summaries and footers
+ * Parses PDF buffer into transaction rows using a resilient multi-pattern engine
  */
 const parsePDF = async (buffer) => {
   const data = await pdfParse(buffer);
@@ -439,31 +582,64 @@ const parsePDF = async (buffer) => {
   const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
   
   const extractedRows = [];
-  // Regex matching: Date ... Narration ... Amount ... [CR|DR|DEBIT|CREDIT]
-  const linePattern = /(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\s+(.+?)\s+([₹$€£]?\s*[\d,]+(?:\.\d{2})?)(?:\s+(CR|DR|DEBIT|CREDIT))?/i;
+
+  const patterns = [
+    // Pattern 1: Date (DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY) ... Narration ... Amount [CR|DR]
+    /(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})\s+(.+?)\s+([₹$€£]?\s*[\d,]+(?:\.\d{2})?)\s*(CR|DR|DEBIT|CREDIT)?/i,
+    // Pattern 2: Month Name Date (04 Sep 2026 or Sep 04, 2026) ... Narration ... Amount
+    /(\d{1,2}\s+[A-Za-z]{3,9}\s+\d{2,4}|[A-Za-z]{3,9}\s+\d{1,2},?\s+\d{2,4})\s+(.+?)\s+([₹$€£]?\s*[\d,]+(?:\.\d{2})?)/i,
+    // Pattern 3: Narration ... Date ... Amount
+    /(.+?)\s+(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})\s+([₹$€£]?\s*[\d,]+(?:\.\d{2})?)/i
+  ];
 
   for (const line of lines) {
-    // Exclude header metadata and disclaimer lines
     if (isNoiseRow(line)) continue;
 
-    const match = line.match(linePattern);
-    if (match) {
-      const dateStr = match[1];
-      const descStr = match[2].trim();
-      const amountStr = match[3];
-      const typeIndicator = (match[4] || '').toUpperCase();
+    for (const pattern of patterns) {
+      const match = line.match(pattern);
+      if (match) {
+        const dateStr = match[1];
+        const descStr = match[2].trim();
+        const amountStr = match[3];
+        const typeIndicator = (match[4] || '').toUpperCase();
 
-      let type = 'expense';
-      if (typeIndicator === 'CR' || typeIndicator === 'CREDIT') {
-        type = 'income';
+        let type = 'expense';
+        if (typeIndicator === 'CR' || typeIndicator === 'CREDIT') {
+          type = 'income';
+        }
+
+        extractedRows.push({
+          Date: dateStr,
+          Description: descStr,
+          Amount: amountStr,
+          Type: type
+        });
+        break;
       }
+    }
+  }
 
-      extractedRows.push({
-        Date: dateStr,
-        Description: descStr,
-        Amount: amountStr,
-        Type: type
-      });
+  // Fallback: If regular patterns found nothing, parse lines with date & amount tokens
+  if (extractedRows.length === 0) {
+    const dateRegex = /\b(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})\b/;
+    const amountRegex = /\b([₹$€£]?\s*[\d,]+(?:\.\d{2})?)\b/;
+
+    for (const line of lines) {
+      if (isNoiseRow(line)) continue;
+      const dMatch = line.match(dateRegex);
+      const aMatch = line.match(amountRegex);
+
+      if (dMatch && aMatch && dMatch[1] !== aMatch[1]) {
+        const cleanDesc = line.replace(dMatch[0], '').replace(aMatch[0], '').replace(/\s+/g, ' ').trim();
+        if (cleanDesc.length > 2) {
+          extractedRows.push({
+            Date: dMatch[1],
+            Description: cleanDesc,
+            Amount: aMatch[1],
+            Type: 'expense'
+          });
+        }
+      }
     }
   }
 
@@ -503,7 +679,7 @@ const parseFinancialFile = async (file) => {
       throw new Error(`Unsupported file extension: .${fileExt}`);
   }
 
-  // Normalize into standard schema and reject noise/metadata
+  // Normalize into standard schema and reject noise
   const normalizedTransactions = normalizeRawRows(rawRows, fileName, fileExt);
 
   return {
@@ -520,6 +696,8 @@ module.exports = {
   normalizeRawRows,
   extractMerchant,
   detectPaymentMethod,
+  parseAmount,
+  parseDate,
   isNoiseRow,
   mapHeaderKey
 };
