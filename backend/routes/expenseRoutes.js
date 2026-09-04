@@ -6,7 +6,8 @@ const {
   createExpense,
   updateExpense,
   deleteExpense,
-  getExpenseSummary
+  getExpenseSummary,
+  exportExcelDashboard
 } = require('../controllers/expenseController');
 const { requireAuth } = require('../middleware/authMiddleware');
 const validate = require('../middleware/validate');
@@ -16,6 +17,7 @@ const router = express.Router();
 // All expense routes require authentication
 router.use(requireAuth);
 
+router.get('/export-excel', exportExcelDashboard);
 router.get('/summary', getExpenseSummary);
 
 router.get('/', getExpenses);

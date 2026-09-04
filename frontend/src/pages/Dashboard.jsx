@@ -11,6 +11,7 @@ import {
   Plus,
   Sparkles,
   FileSpreadsheet,
+  CheckCircle2,
   ChevronRight
 } from 'lucide-react';
 import {
@@ -26,6 +27,8 @@ import {
   Cell
 } from 'recharts';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { exportDashboardToExcel } from '../utils/excelExporter';
 
 const CATEGORY_COLORS = {
   Food: '#F59E0B',
@@ -44,9 +47,14 @@ const CATEGORY_COLORS = {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [exportNotice, setExportNotice] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [income, setIncome] = useState([]);
+  const [budgets, setBudgets] = useState([]);
+  const [goals, setGoals] = useState([]);
   const [stats, setStats] = useState({
     totalIncome: 0,
     totalExpenses: 0,
@@ -63,16 +71,22 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [expRes, incRes] = await Promise.all([
+      const [expRes, incRes, bgtRes, goalRes] = await Promise.all([
         api.get('/expenses?limit=100'),
-        api.get('/income?limit=100')
+        api.get('/income?limit=100'),
+        api.get('/budgets'),
+        api.get('/goals')
       ]);
 
       const expList = expRes.data.data || [];
       const incList = incRes.data.data || [];
+      const bgtList = bgtRes.data.data || [];
+      const goalList = goalRes.data.data || [];
 
       setExpenses(expList);
       setIncome(incList);
+      setBudgets(bgtList);
+      setGoals(goalList);
 
       const totalExp = expList.reduce((sum, item) => sum + item.amount, 0);
       const totalInc = incList.reduce((sum, item) => sum + item.amount, 0);
@@ -113,12 +127,32 @@ const Dashboard = () => {
     }
   };
 
+  const handleExportExcel = () => {
+    try {
+      setExporting(true);
+      const filename = exportDashboardToExcel({
+        user: user || { name: 'Joel User', email: 'joel.user@example.com' },
+        expenses,
+        income,
+        budgets,
+        goals
+      });
+      setExportNotice(`Generated & downloaded 7-sheet workbook: ${filename}`);
+      setTimeout(() => setExportNotice(null), 6000);
+    } catch (err) {
+      console.error('Error exporting Excel report:', err);
+      alert('Failed to generate Excel report. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const formatCurrency = (val) => `₹${Number(val).toLocaleString('en-IN')}`;
 
   return (
     <div>
       {/* Header Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.85rem' }}>Financial Executive Dashboard</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
@@ -126,7 +160,17 @@ const Dashboard = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button
+            onClick={handleExportExcel}
+            disabled={exporting}
+            className="btn btn-secondary"
+            title="Export full 7-sheet multi-tab Excel dashboard"
+            style={{ borderColor: 'rgba(34, 197, 94, 0.4)', color: '#22c55e' }}
+          >
+            <FileSpreadsheet size={16} />
+            <span>{exporting ? 'Generating...' : 'Export Excel Dashboard'}</span>
+          </button>
           <button
             onClick={() => navigate('/import')}
             className="btn btn-secondary"
@@ -143,6 +187,25 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
+
+      {/* Export Success Notification Banner */}
+      {exportNotice && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          padding: '0.85rem 1.25rem',
+          backgroundColor: 'rgba(34, 197, 94, 0.12)',
+          border: '1px solid rgba(34, 197, 94, 0.3)',
+          borderRadius: '8px',
+          color: '#4ade80',
+          marginBottom: '1.5rem',
+          fontSize: '0.9rem'
+        }}>
+          <CheckCircle2 size={18} />
+          <span><strong>Success!</strong> {exportNotice} (Includes 7 worksheets: Dashboard, Transactions, Expenses, Income, Category Summary, Monthly Summary, Budget Performance)</span>
+        </div>
+      )}
 
       {/* 4 Metric Overview Cards */}
       <div className="grid-4" style={{ marginBottom: '2rem' }}>

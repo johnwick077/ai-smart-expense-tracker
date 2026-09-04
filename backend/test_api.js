@@ -449,7 +449,7 @@ const request = (method, endpoint, headers = {}, body = null, isMultipart = fals
         } catch {
           json = data;
         }
-        resolve({ status: res.statusCode, data: json });
+        resolve({ status: res.statusCode, headers: res.headers, data: json });
       });
     });
 
@@ -548,6 +548,9 @@ const runTests = async () => {
       description: 'Added cold beverage'
     });
     assert(updateExp.status === 200 && updateExp.data.data.amount === 500, 'PUT /expenses/:id updates expense amount to ₹500');
+
+    const exportExp = await request('GET', '/expenses/export-excel', { Authorization: `Bearer ${userToken}` });
+    assert(exportExp.status === 200 && exportExp.headers['content-disposition']?.includes('.xlsx'), 'GET /expenses/export-excel generates 7-sheet workbook download');
 
     // 4. Income
     console.log('\n--- 4. Income Management CRUD ---');

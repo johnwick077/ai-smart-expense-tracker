@@ -56,10 +56,42 @@ ai-expense-tracker/
 
 ## 📅 4-Week Development Roadmap
 
-- [x] **Week 1: Planning & Architecture** (Wireframes, Design System, DB Schemas, Packages, Cloud Setup, Notion Evidence)
-- [ ] **Week 2: Backend Development & API Testing** (Auth, CRUD, File Parser, Gemini AI Integration, Postman Collection)
-- [ ] **Week 3: Frontend Scaffolding & Integration** (Vite + React UI Components, Responsive Layouts, API Wiring)
-- [ ] **Week 4: Final Polish, Excel Dashboard Export & Production Deployment** (Multi-sheet Excel, End-to-end testing, Cloud deployment)
+- [x] **Week 1: Planning & Architecture** (Wireframes for 17 views, Dark Design System tokens, MongoDB Schemas, ER Diagram, Package Selection, Cloud Plan)
+- [x] **Week 2: Backend Development & AI Integration** (JWT Auth/RBAC, Expense/Income CRUD, Multi-format Parsers for PDF/Excel/CSV/TXT/JSON, Gemini AI Categorization/Chat, 39/39 Passing API Tests, Postman Collection)
+- [x] **Week 3: Frontend Scaffolding & Design System** (Vite + React 18, Custom Dark Theme CSS, 17 Interactive Views, Recharts Analytics, Dropzone Ingestion, Client Axios Pipeline)
+- [x] **Week 4: Professional Excel Dashboard & Production Polish** (7-Sheet Formatted SheetJS Excel Export, Client & Server Binary Delivery, End-to-End Verification, Zero-Config In-Memory Fallback)
+
+---
+
+## 🔑 Demo Accounts (Instant Offline Testing)
+
+The platform includes a resilient in-memory database fallback with pre-seeded data, allowing immediate testing even without a local MongoDB service:
+
+| Account Role | Email Address | Password | Permissions & Features |
+| :--- | :--- | :--- | :--- |
+| **Standard User** | `joel.user@example.com` | `Password123!` | Dashboard, CRUD Expenses/Income, Budgets, Goals, File Import, AI Assistant, 7-Sheet Excel Export |
+| **Admin Superuser** | `admin@expensetracker.ai` | `AdminSecure123!` | Admin Analytics, User Directory, Global Ingestion Statistics, Security Controls |
+
+---
+
+## ⚡ Quick Start
+
+```bash
+# 1. Clone repository
+git clone https://github.com/johnwick077/ai-smart-expense-tracker.git
+cd ai-smart-expense-tracker
+
+# 2. Install dependencies
+cd backend && npm install
+cd ../frontend && npm install
+cd ..
+
+# 3. Launch both backend (port 5000) and frontend (port 5173) simultaneously
+npm run dev
+
+# 4. Run automated test suite (39/39 passing)
+cd backend && npm test
+```
 
 ---
 
@@ -72,6 +104,7 @@ NODE_ENV=development
 CLIENT_URL=http://localhost:5173
 MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/ai_expense_tracker?retryWrites=true&w=majority
 JWT_SECRET=your_super_secret_jwt_key_min_32_chars
+ADMIN_SECRET=your_admin_secret_key
 GEMINI_API_KEY=your_google_gemini_api_key
 MAX_FILE_SIZE_MB=10
 ```
@@ -90,3 +123,6 @@ VITE_API_BASE_URL=http://localhost:5000/api
 * [Package Planning & Rationale](file:///c:/Users/joelm/Downloads/Mern_pro/docs/package_planning.md)
 * [System Architecture & Ingestion Pipeline](file:///c:/Users/joelm/Downloads/Mern_pro/docs/architecture.md)
 * [Week 1 Notion Evidence Submission](file:///c:/Users/joelm/Downloads/Mern_pro/docs/notion_week1_evidence.md)
+* [Week 2 Notion Evidence Submission](file:///c:/Users/joelm/Downloads/Mern_pro/docs/notion_week2_evidence.md)
+* [Week 3 Notion Evidence Submission](file:///c:/Users/joelm/Downloads/Mern_pro/docs/notion_week3_evidence.md)
+* [Week 4 Notion Evidence Submission](file:///c:/Users/joelm/Downloads/Mern_pro/docs/notion_week4_evidence.md)

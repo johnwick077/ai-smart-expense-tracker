@@ -4,6 +4,8 @@ import {
   TrendingUp,
   CreditCard,
   Calendar,
+  FileSpreadsheet,
+  CheckCircle2,
   X
 } from 'lucide-react';
 import {
@@ -19,6 +21,8 @@ import {
   Legend
 } from 'recharts';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { exportDashboardToExcel } from '../utils/excelExporter';
 
 const CATEGORY_COLORS = {
   Food: '#F59E0B',
@@ -37,8 +41,13 @@ const CATEGORY_COLORS = {
 const PAYMENT_COLORS = ['#6366F1', '#EC4899', '#06B6D4', '#10B981', '#F59E0B', '#64748B'];
 
 const Analytics = () => {
+  const { user } = useAuth();
   const [expenses, setExpenses] = useState([]);
+  const [income, setIncome] = useState([]);
+  const [budgets, setBudgets] = useState([]);
+  const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [exportNotice, setExportNotice] = useState(null);
   const [categoryBreakdown, setCategoryBreakdown] = useState([]);
   const [paymentData, setPaymentData] = useState([]);
   const [selectedCategoryModal, setSelectedCategoryModal] = useState(null);
@@ -50,9 +59,18 @@ const Analytics = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/expenses?limit=300');
-      const list = res.data.data || [];
+      const [expRes, incRes, bgtRes, goalRes] = await Promise.all([
+        api.get('/expenses?limit=300'),
+        api.get('/income?limit=100'),
+        api.get('/budgets'),
+        api.get('/goals')
+      ]);
+
+      const list = expRes.data.data || [];
       setExpenses(list);
+      setIncome(incRes.data.data || []);
+      setBudgets(bgtRes.data.data || []);
+      setGoals(goalRes.data.data || []);
 
       // Category breakdown
       const catMap = {};
@@ -90,6 +108,18 @@ const Analytics = () => {
     }
   };
 
+  const handleExport = () => {
+    const filename = exportDashboardToExcel({
+      user: user || { name: 'Joel User', email: 'joel.user@example.com' },
+      expenses,
+      income,
+      budgets,
+      goals
+    });
+    setExportNotice(`Exported 7-sheet report: ${filename}`);
+    setTimeout(() => setExportNotice(null), 5000);
+  };
+
   const trendData = [
     { month: 'Apr', spend: 21000 },
     { month: 'May', spend: 24500 },
@@ -101,12 +131,41 @@ const Analytics = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem' }}>Financial Analytics & Drill-Down</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-          Deep-dive analysis into spending patterns, payment channels, and category allocations
-        </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1 style={{ fontSize: '1.75rem' }}>Financial Analytics & Drill-Down</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            Deep-dive analysis into spending patterns, payment channels, and category allocations
+          </p>
+        </div>
+
+        <button
+          onClick={handleExport}
+          className="btn btn-secondary"
+          style={{ borderColor: 'rgba(34, 197, 94, 0.4)', color: '#22c55e' }}
+        >
+          <FileSpreadsheet size={16} />
+          <span>Export 7-Sheet Workbook</span>
+        </button>
       </div>
+
+      {exportNotice && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          padding: '0.75rem 1.25rem',
+          backgroundColor: 'rgba(34, 197, 94, 0.12)',
+          border: '1px solid rgba(34, 197, 94, 0.3)',
+          borderRadius: '8px',
+          color: '#4ade80',
+          marginBottom: '1.5rem',
+          fontSize: '0.88rem'
+        }}>
+          <CheckCircle2 size={16} />
+          <span>{exportNotice}</span>
+        </div>
+      )}
 
       {/* 6-Month Velocity Area Chart */}
       <div className="card" style={{ marginBottom: '2rem' }}>
