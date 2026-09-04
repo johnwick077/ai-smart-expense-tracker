@@ -87,11 +87,15 @@ const PORT = process.env.PORT || 5000;
 
 // Start server if not running as a test module
 if (process.env.NODE_ENV !== 'test') {
-  connectDB().then(() => {
-    app.listen(PORT, () => {
-      console.log(`[Server] AI Smart Expense Tracker API running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode.`);
+  connectDB()
+    .catch((err) => {
+      console.warn(`[MongoDB] Initial connection warning: ${err.message}`);
+    })
+    .finally(() => {
+      app.listen(PORT, () => {
+        console.log(`[Server] AI Smart Expense Tracker API running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode.`);
+      });
     });
-  });
 }
 
 module.exports = app;
