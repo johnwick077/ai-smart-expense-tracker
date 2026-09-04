@@ -45,6 +45,39 @@ AI_Smart_Expense_Report_YYYY-MM-DD.xlsx
 
 ---
 
+## 2.1. Multi-Device Responsive Compatibility
+
+The application is engineered and verified for full responsiveness across all screen sizes:
+* **Mobile Devices (320px – 640px)**:
+  - Collapsible slide-in navigation drawer with backdrop overlay and touch dismiss.
+  - Hamburger toggle button with smooth touch interactions.
+  - 1-column adaptive KPI cards, single-column responsive charts, and touch-scrolling data tables (`-webkit-overflow-scrolling: touch`).
+  - Compact header actions avoiding horizontal overflow.
+* **Tablets (640px – 1024px)**:
+  - 2-column adaptive metric grids and dual-axis chart resizing.
+* **Desktops (> 1024px)**:
+  - Persistent high-contrast sidebar, full 4-column overview cards, and dual-column split analytics.
+
+---
+
+## 2.2. Intelligent Statement Ingestion & Payment Mode Extraction
+
+Real-world bank statements frequently contain preliminary account metadata, opening/closing balance summaries, and footer disclaimers mixed with transaction tables. The parser now implements:
+1. **Header Identification & Noise Rejection**:
+   - Automatically detects the actual transaction table header row, skipping account number, IFSC, branch, and customer address headers.
+   - Strictly filters out non-transaction noise rows: opening balance, closing balance, brought/carried forward, total withdrawal summaries, and disclaimers.
+   - Extracts **ONLY genuine transaction rows** with valid dates and positive monetary amounts.
+2. **Payment Mode Extraction**:
+   - Detects and normalizes payment channels directly from transaction narration:
+     - `UPI` / `VPA` / `GPay` / `PhonePe` / `Paytm` → **`UPI`**
+     - `Debit Card` / `POS` / `ECOM` → **`Debit Card`**
+     - `ATM` / `ATM WDM` / `Cash Withdrawal` → **`ATM`** (classified as expense withdrawal)
+     - `Credit Card` / `CC Bill` → **`Credit Card`**
+     - `Net Banking` / `NEFT` / `RTGS` / `IMPS` → **`Net Banking`**
+   - Automatically strips bank transaction prefixes (e.g. `ATM WDM/`, `POS 1234 DEBIT CARD/`, `UPI/`) to extract clean merchant and payee names.
+
+---
+
 ## 3. Test Suite Verification & Quality Assurance
 
 The comprehensive automated test suite (`backend/test_api.js`) verified all 39 test scenarios with a 100% pass rate:

@@ -373,7 +373,8 @@ ImportHistory.countDocuments = async () => db.imports.length;
 const app = require('./server');
 
 let server;
-let baseUrl = 'http://localhost:5001/api';
+const TEST_PORT = process.env.TEST_PORT || 5002;
+let baseUrl = `http://localhost:${TEST_PORT}/api`;
 let userToken = '';
 let adminToken = '';
 let createdExpenseId = '';
@@ -471,11 +472,12 @@ const runTests = async () => {
 
   try {
     // Start Express Test Server
-    await new Promise((resolve) => {
-      server = app.listen(5001, () => {
+    await new Promise((resolve, reject) => {
+      server = app.listen(TEST_PORT, () => {
         console.log(`[Test Setup] Express test server listening at ${baseUrl}\n`);
         resolve();
       });
+      server.on('error', reject);
     });
 
     // 1. Health

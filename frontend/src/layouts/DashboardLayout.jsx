@@ -56,16 +56,36 @@ const DashboardLayout = () => {
 
   return (
     <div className="app-container">
-      {/* Desktop Sidebar */}
-      <aside className="sidebar">
+      {/* Mobile Drawer Backdrop */}
+      {mobileOpen && (
+        <div
+          className="mobile-backdrop"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Close sidebar navigation"
+        />
+      )}
+
+      {/* Desktop & Mobile Responsive Sidebar */}
+      <aside className={`sidebar ${mobileOpen ? 'sidebar-mobile-open' : ''}`}>
         <div className="sidebar-header">
-          <div className="brand-logo">
-            <Sparkles size={20} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div className="brand-logo">
+              <Sparkles size={20} />
+            </div>
+            <div>
+              <div className="brand-title">SmartExpense AI</div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Financial Ingestion Hub</span>
+            </div>
           </div>
-          <div>
-            <div className="brand-title">SmartExpense AI</div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Financial Ingestion Hub</span>
-          </div>
+          {mobileOpen && (
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="btn btn-secondary btn-icon mobile-close-btn"
+              aria-label="Close sidebar"
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
 
         <nav className="sidebar-nav">
@@ -78,6 +98,7 @@ const DashboardLayout = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={() => setMobileOpen(false)}
                 className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
               >
                 <Icon size={18} />
@@ -103,44 +124,45 @@ const DashboardLayout = () => {
       <div className="main-content">
         {/* Top Navbar */}
         <header className="topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="btn btn-secondary btn-icon"
-              style={{ display: 'none' }}
+              className="btn btn-secondary btn-icon mobile-toggle-btn"
+              aria-label="Toggle navigation menu"
             >
               {mobileOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
-            <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+            <div className="topbar-welcome" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
               Welcome, <strong style={{ color: 'var(--text-primary)' }}>{user?.name || 'User'}</strong>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <button
               onClick={() => navigate('/import')}
-              className="btn btn-secondary btn-sm"
+              className="btn btn-secondary btn-sm topbar-action-btn"
             >
               <UploadCloud size={15} />
-              <span>Import File</span>
+              <span className="btn-text-responsive">Import File</span>
             </button>
 
             <button
               onClick={() => navigate('/expenses')}
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary btn-sm topbar-action-btn"
             >
               <Plus size={15} />
-              <span>Add Expense</span>
+              <span className="btn-text-responsive">Add Expense</span>
             </button>
 
             <div
               onClick={() => navigate('/profile')}
               className="user-profile-badge"
+              title="View Profile & Settings"
             >
               <div className="avatar-circle">
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </div>
-              <div style={{ textAlign: 'left' }}>
+              <div className="user-profile-text" style={{ textAlign: 'left' }}>
                 <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{user?.name}</div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                   {user?.role === 'admin' ? 'Administrator' : 'Personal Member'}
