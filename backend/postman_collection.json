@@ -1,0 +1,578 @@
+{
+  "info": {
+    "_postman_id": "99b78326-8c04-4f8a-a91b-b68b39c882c7",
+    "name": "AI Smart Expense Tracker API",
+    "description": "Comprehensive Postman test collection for AI Smart Expense Tracker MERN + Gemini AI Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "expenseId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "incomeId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "budgetId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "goalId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. System Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "if (res.token) { pm.collectionVariables.set('authToken', res.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Joel Demo\",\n  \"email\": \"joel.user@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Register Admin User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Admin registered or exists', () => pm.expect(pm.response.code).to.be.oneOf([201, 400]));",
+                  "if (res.token) { pm.collectionVariables.set('adminToken', res.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin Superuser\",\n  \"email\": \"admin@expensetracker.ai\",\n  \"password\": \"AdminSecure123!\",\n  \"role\": \"admin\",\n  \"adminSecret\": \"admin_master_secret_2026\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Login status 200', () => pm.response.to.have.status(200));",
+                  "if (res.token) { pm.collectionVariables.set('authToken', res.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"joel.user@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Admin login status 200', () => pm.response.to.have.status(200));",
+                  "if (res.token) { pm.collectionVariables.set('adminToken', res.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@expensetracker.ai\",\n  \"password\": \"AdminSecure123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/profile", "host": ["{{baseUrl}}"], "path": ["auth", "profile"] }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Expense CRUD",
+      "item": [
+        {
+          "name": "Create Expense",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "if (res.data && res.data._id) { pm.collectionVariables.set('expenseId', res.data._id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Dinner at Olive Bistro\",\n  \"amount\": 1450.00,\n  \"category\": \"Food\",\n  \"merchant\": \"Olive Bistro\",\n  \"paymentMethod\": \"Credit Card\",\n  \"date\": \"2026-09-04\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/expenses", "host": ["{{baseUrl}}"], "path": ["expenses"] }
+          }
+        },
+        {
+          "name": "Get All Expenses",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/expenses?page=1&limit=20", "host": ["{{baseUrl}}"], "path": ["expenses"] }
+          }
+        },
+        {
+          "name": "Get Single Expense",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/expenses/{{expenseId}}", "host": ["{{baseUrl}}"], "path": ["expenses", "{{expenseId}}"] }
+          }
+        },
+        {
+          "name": "Update Expense",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1500.00,\n  \"description\": \"Updated with dessert\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/expenses/{{expenseId}}", "host": ["{{baseUrl}}"], "path": ["expenses", "{{expenseId}}"] }
+          }
+        },
+        {
+          "name": "Get Expense Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/expenses/summary", "host": ["{{baseUrl}}"], "path": ["expenses", "summary"] }
+          }
+        },
+        {
+          "name": "Delete Expense",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/expenses/{{expenseId}}", "host": ["{{baseUrl}}"], "path": ["expenses", "{{expenseId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Income CRUD",
+      "item": [
+        {
+          "name": "Create Income",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "if (res.data && res.data._id) { pm.collectionVariables.set('incomeId', res.data._id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"Primary Tech Salary\",\n  \"amount\": 45000.00,\n  \"description\": \"September Consulting Pay\",\n  \"date\": \"2026-09-01\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/income", "host": ["{{baseUrl}}"], "path": ["income"] }
+          }
+        },
+        {
+          "name": "Get All Income",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/income", "host": ["{{baseUrl}}"], "path": ["income"] }
+          }
+        },
+        {
+          "name": "Get Single Income",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/income/{{incomeId}}", "host": ["{{baseUrl}}"], "path": ["income", "{{incomeId}}"] }
+          }
+        },
+        {
+          "name": "Update Income",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 47500.00\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/income/{{incomeId}}", "host": ["{{baseUrl}}"], "path": ["income", "{{incomeId}}"] }
+          }
+        },
+        {
+          "name": "Delete Income",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/income/{{incomeId}}", "host": ["{{baseUrl}}"], "path": ["income", "{{incomeId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Budget Management",
+      "item": [
+        {
+          "name": "Set Monthly Budget",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"Food\",\n  \"amount\": 8000,\n  \"month\": 9,\n  \"year\": 2026\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/budgets", "host": ["{{baseUrl}}"], "path": ["budgets"] }
+          }
+        },
+        {
+          "name": "Get Budgets with Spent Comparison",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/budgets?month=9&year=2026", "host": ["{{baseUrl}}"], "path": ["budgets"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Savings Goals",
+      "item": [
+        {
+          "name": "Create Savings Goal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (res.data && res.data._id) { pm.collectionVariables.set('goalId', res.data._id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Emergency Stash 2026\",\n  \"targetAmount\": 100000,\n  \"currentAmount\": 25000,\n  \"deadline\": \"2026-12-31\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/goals", "host": ["{{baseUrl}}"], "path": ["goals"] }
+          }
+        },
+        {
+          "name": "Get All Goals",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/goals", "host": ["{{baseUrl}}"], "path": ["goals"] }
+          }
+        },
+        {
+          "name": "Deposit Funds to Goal",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 5000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/goals/{{goalId}}/deposit", "host": ["{{baseUrl}}"], "path": ["goals", "{{goalId}}", "deposit"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Categories",
+      "item": [
+        {
+          "name": "Get Categories",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] }
+          }
+        },
+        {
+          "name": "Create Custom Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Gadgets\",\n  \"type\": \"expense\",\n  \"color\": \"#06B6D4\",\n  \"icon\": \"Smartphone\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. File Ingestion & Staging Pipeline",
+      "item": [
+        {
+          "name": "Upload Financial File (CSV/Excel/JSON/PDF/TXT)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "test_samples/sample_statement.csv"
+                }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/import/upload", "host": ["{{baseUrl}}"], "path": ["import", "upload"] }
+          }
+        },
+        {
+          "name": "Confirm & Process Imported Transactions",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fileName\": \"sample_statement.csv\",\n  \"fileType\": \"csv\",\n  \"fileSize\": 1024,\n  \"transactions\": [\n    {\n      \"date\": \"2026-09-04\",\n      \"description\": \"Swiggy Bangalore UPI\",\n      \"merchant\": \"Swiggy\",\n      \"amount\": 450,\n      \"type\": \"expense\",\n      \"category\": \"Food\",\n      \"paymentMethod\": \"UPI\",\n      \"aiCategorized\": true,\n      \"aiConfidence\": 0.98\n    },\n    {\n      \"date\": \"2026-09-03\",\n      \"description\": \"Marriott Hotel Mumbai\",\n      \"merchant\": \"Marriott\",\n      \"amount\": 6500,\n      \"type\": \"expense\",\n      \"category\": \"Hotel\",\n      \"paymentMethod\": \"Credit Card\",\n      \"aiCategorized\": true,\n      \"aiConfidence\": 0.96\n    },\n    {\n      \"date\": \"2026-09-01\",\n      \"description\": \"Tech Consulting Salary\",\n      \"merchant\": \"Tech Innovations\",\n      \"amount\": 40000,\n      \"type\": \"income\",\n      \"paymentMethod\": \"Net Banking\"\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/import/process", "host": ["{{baseUrl}}"], "path": ["import", "process"] }
+          }
+        },
+        {
+          "name": "Get Import History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/import/history", "host": ["{{baseUrl}}"], "path": ["import", "history"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Gemini AI Financial Intelligence",
+      "item": [
+        {
+          "name": "AI Batch Categorization",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactions\": [\n    { \"description\": \"Swiggy Delivery Koramangala\", \"merchant\": \"Swiggy\", \"amount\": 320 },\n    { \"description\": \"Marriott Resort Goa\", \"merchant\": \"Marriott\", \"amount\": 8900 },\n    { \"description\": \"Uber India Trip\", \"merchant\": \"Uber\", \"amount\": 280 },\n    { \"description\": \"Amazon Retail India\", \"merchant\": \"Amazon\", \"amount\": 1499 }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/ai/categorize", "host": ["{{baseUrl}}"], "path": ["ai", "categorize"] }
+          }
+        },
+        {
+          "name": "AI Spending Analysis",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/ai/analyze", "host": ["{{baseUrl}}"], "path": ["ai", "analyze"] }
+          }
+        },
+        {
+          "name": "AI Monthly Summary",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"month\": 9,\n  \"year\": 2026\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/ai/monthly-summary", "host": ["{{baseUrl}}"], "path": ["ai", "monthly-summary"] }
+          }
+        },
+        {
+          "name": "AI Budget Recommendations",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/ai/budget", "host": ["{{baseUrl}}"], "path": ["ai", "budget"] }
+          }
+        },
+        {
+          "name": "AI Saving Suggestions",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/ai/suggestions", "host": ["{{baseUrl}}"], "path": ["ai", "suggestions"] }
+          }
+        },
+        {
+          "name": "AI Financial Assistant Chat",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"Where did I spend the most money this month?\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/ai/chat", "host": ["{{baseUrl}}"], "path": ["ai", "chat"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Admin Console",
+      "item": [
+        {
+          "name": "Get System Platform Stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/stats", "host": ["{{baseUrl}}"], "path": ["admin", "stats"] }
+          }
+        },
+        {
+          "name": "Get All Registered Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/users?page=1&limit=10", "host": ["{{baseUrl}}"], "path": ["admin", "users"] }
+          }
+        }
+      ]
+    }
+  ]
+}
