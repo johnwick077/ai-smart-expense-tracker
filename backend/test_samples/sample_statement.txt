@@ -1,0 +1,6 @@
+Date	Description	Amount	Type
+04-09-2026	Swiggy Bangalore Order	450.00	Expense
+03-09-2026	Marriott Hotel Stay	6500.00	Expense
+02-09-2026	Amazon Shopping India	2400.00	Expense
+01-09-2026	Uber India Cab	350.00	Expense
+01-09-2026	Salary Deposit Tech Corp	40000.00	Income

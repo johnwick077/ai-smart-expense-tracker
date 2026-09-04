@@ -1,0 +1,42 @@
+[
+  {
+    "date": "2026-09-04",
+    "description": "Swiggy Food Delivery Bangalore",
+    "merchant": "Swiggy",
+    "amount": 450.00,
+    "type": "expense",
+    "paymentMethod": "UPI"
+  },
+  {
+    "date": "2026-09-03",
+    "description": "Marriott Hotel Executive Room",
+    "merchant": "Marriott Hotel",
+    "amount": 6500.00,
+    "type": "expense",
+    "paymentMethod": "Credit Card"
+  },
+  {
+    "date": "2026-09-02",
+    "description": "Amazon India Wireless Earbuds",
+    "merchant": "Amazon",
+    "amount": 2400.00,
+    "type": "expense",
+    "paymentMethod": "Net Banking"
+  },
+  {
+    "date": "2026-09-01",
+    "description": "Uber Office Commute",
+    "merchant": "Uber",
+    "amount": 350.00,
+    "type": "expense",
+    "paymentMethod": "UPI"
+  },
+  {
+    "date": "2026-09-01",
+    "description": "Monthly Software Consulting Salary",
+    "merchant": "Tech Innovations Pvt Ltd",
+    "amount": 40000.00,
+    "type": "income",
+    "paymentMethod": "Net Banking"
+  }
+]
