@@ -51,7 +51,8 @@ const SavingsGoals = () => {
     if (!depositGoal) return;
 
     try {
-      const res = await api.post(`/goals/${depositGoal.id}/deposit`, { amount: depositAmount });
+      const goalId = depositGoal._id || depositGoal.id;
+      const res = await api.post(`/goals/${goalId}/deposit`, { amount: depositAmount });
       const updated = res.data.data;
 
       // Trigger celebratory confetti if goal reached 100%
@@ -158,7 +159,7 @@ const SavingsGoals = () => {
                     </button>
                   )}
                   <button
-                    onClick={() => handleDelete(goal.id)}
+                    onClick={() => handleDelete(goal._id || goal.id)}
                     className="btn btn-danger btn-icon btn-sm"
                   >
                     <Trash2 size={14} />

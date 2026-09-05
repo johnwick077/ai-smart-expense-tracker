@@ -15,6 +15,7 @@ import Expenses from './pages/Expenses';
 import Income from './pages/Income';
 import Budgets from './pages/Budgets';
 import SavingsGoals from './pages/SavingsGoals';
+import Loans from './pages/Loans';
 import ImportData from './pages/ImportData';
 import ImportReview from './pages/ImportReview';
 import ImportHistory from './pages/ImportHistory';
@@ -64,6 +65,7 @@ function App() {
             <Route path="/income" element={<Income />} />
             <Route path="/budgets" element={<Budgets />} />
             <Route path="/goals" element={<SavingsGoals />} />
+            <Route path="/loans" element={<Loans />} />
             <Route path="/import" element={<ImportData />} />
             <Route path="/import/review" element={<ImportReview />} />
             <Route path="/import/history" element={<ImportHistory />} />

@@ -43,7 +43,7 @@ const Income = () => {
   };
 
   const handleOpenEdit = (inc) => {
-    setEditingId(inc._id);
+    setEditingId(inc._id || inc.id);
     setFormData({
       source: inc.source,
       amount: inc.amount,
@@ -164,7 +164,7 @@ const Income = () => {
                     <Edit2 size={14} />
                   </button>
                   <button
-                    onClick={() => handleDelete(inc._id)}
+                    onClick={() => handleDelete(inc._id || inc.id)}
                     className="btn btn-danger btn-icon btn-sm"
                   >
                     <Trash2 size={14} />

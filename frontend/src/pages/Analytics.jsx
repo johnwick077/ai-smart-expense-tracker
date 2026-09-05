@@ -35,6 +35,7 @@ const CATEGORY_COLORS = {
   Education: '#6366F1',
   Rent: '#14B8A6',
   Travel: '#0EA5E9',
+  Loan: '#E11D48',
   Other: '#6B7280'
 };
 

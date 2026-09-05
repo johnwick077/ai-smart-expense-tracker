@@ -13,6 +13,7 @@ const getGoals = async (req, res, next) => {
 
       return {
         id: g._id,
+        _id: g._id,
         title: g.title,
         targetAmount: g.targetAmount,
         currentAmount: g.currentAmount,

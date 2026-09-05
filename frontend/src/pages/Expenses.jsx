@@ -4,10 +4,10 @@ import api from '../services/api';
 
 const CATEGORIES = [
   'Food', 'Hotel', 'Shopping', 'Transport', 'Bills',
-  'Entertainment', 'Healthcare', 'Education', 'Rent', 'Travel', 'Other'
+  'Entertainment', 'Healthcare', 'Education', 'Rent', 'Travel', 'Loan', 'Other'
 ];
 
-const PAYMENT_METHODS = ['UPI', 'Credit Card', 'Debit Card', 'Cash', 'Net Banking', 'Other'];
+const PAYMENT_METHODS = ['UPI', 'Debit Card', 'ATM', 'Credit Card', 'Cash', 'Net Banking', 'Cheque', 'Other'];
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([]);
@@ -63,7 +63,7 @@ const Expenses = () => {
   };
 
   const handleOpenEdit = (exp) => {
-    setEditingId(exp._id);
+    setEditingId(exp._id || exp.id);
     setFormData({
       title: exp.title,
       amount: exp.amount,
@@ -196,7 +196,7 @@ const Expenses = () => {
                     <Edit2 size={14} />
                   </button>
                   <button
-                    onClick={() => handleDelete(exp._id)}
+                    onClick={() => handleDelete(exp._id || exp.id)}
                     className="btn btn-danger btn-icon btn-sm"
                   >
                     <Trash2 size={14} />

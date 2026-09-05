@@ -12,7 +12,9 @@ import {
   Sparkles,
   FileSpreadsheet,
   CheckCircle2,
-  ChevronRight
+  ChevronRight,
+  Landmark,
+  AlertTriangle
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -41,6 +43,7 @@ const CATEGORY_COLORS = {
   Education: '#6366F1',
   Rent: '#14B8A6',
   Travel: '#0EA5E9',
+  Loan: '#E11D48',
   Salary: '#22C55E',
   Other: '#6B7280'
 };
@@ -63,6 +66,7 @@ const Dashboard = () => {
   });
   const [categoryData, setCategoryData] = useState([]);
   const [monthlyComparison, setMonthlyComparison] = useState([]);
+  const [loanSummary, setLoanSummary] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -71,17 +75,21 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [expRes, incRes, bgtRes, goalRes] = await Promise.all([
+      const [expRes, incRes, bgtRes, goalRes, loanRes] = await Promise.all([
         api.get('/expenses?limit=100'),
         api.get('/income?limit=100'),
         api.get('/budgets'),
-        api.get('/goals')
+        api.get('/goals'),
+        api.get('/loans').catch(() => ({ data: { data: null } }))
       ]);
 
       const expList = expRes.data.data || [];
       const incList = incRes.data.data || [];
       const bgtList = bgtRes.data.data || [];
       const goalList = goalRes.data.data || [];
+      if (loanRes.data?.data) {
+        setLoanSummary(loanRes.data.data);
+      }
 
       setExpenses(expList);
       setIncome(incList);
@@ -263,6 +271,61 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Loan & Debt Portfolio Health Banner */}
+      {loanSummary && loanSummary.grandTotal && (
+        <div
+          className="card"
+          style={{
+            marginBottom: '2rem',
+            background: 'linear-gradient(135deg, rgba(15, 41, 66, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%)',
+            border: '1px solid #1E4976',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.25rem 1.75rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1.25rem'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: '280px' }}>
+            <div style={{ background: 'rgba(225, 29, 72, 0.2)', color: '#E11D48', padding: '0.85rem', borderRadius: 'var(--radius-md)' }}>
+              <Landmark size={28} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#FFF' }}>Loan & Debt Portfolio</h3>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    padding: '0.15rem 0.6rem',
+                    borderRadius: '999px',
+                    background: `${loanSummary.healthAnalysis?.badgeColor || '#10B981'}22`,
+                    color: loanSummary.healthAnalysis?.badgeColor || '#10B981',
+                    border: `1px solid ${loanSummary.healthAnalysis?.badgeColor || '#10B981'}55`
+                  }}
+                >
+                  Health: {loanSummary.healthAnalysis?.label || 'Active'}
+                </span>
+              </div>
+              <p style={{ margin: '0.25rem 0 0 0', color: '#94A3B8', fontSize: '0.85rem' }}>
+                Combined Outstanding: <strong style={{ color: '#FFF' }}>₹{loanSummary.grandTotal.combinedDebt.toLocaleString('en-IN')}</strong> &middot; Monthly Outflow: <strong style={{ color: '#38BDF8' }}>₹{loanSummary.grandTotal.totalMonthlyCommitment.toLocaleString('en-IN')}/mo</strong> ({loanSummary.healthAnalysis?.dtiRatio}% of cashflow)
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => navigate('/loans')}
+            className="btn btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap' }}
+          >
+            <span>View Full Debt Tracker & Graphs</span>
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Visual Analytics Grid: Monthly Comparison & Category Donut */}
       <div className="grid-2" style={{ marginBottom: '2rem' }}>

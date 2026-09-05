@@ -7,13 +7,20 @@ import {
   Sparkles,
   ArrowRight,
   ArrowLeft,
-  Filter
+  Filter,
+  Landmark,
+  Calendar
 } from 'lucide-react';
 import api from '../services/api';
 
 const PREDEFINED_CATEGORIES = [
   'Food', 'Hotel', 'Shopping', 'Transport', 'Bills',
-  'Entertainment', 'Healthcare', 'Education', 'Rent', 'Travel', 'Salary', 'Other'
+  'Entertainment', 'Healthcare', 'Education', 'Rent', 'Travel', 'Loan', 'Salary', 'Other'
+];
+
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
 const ImportReview = () => {
@@ -99,13 +106,15 @@ const ImportReview = () => {
         fileName: stagedData.fileName,
         fileType: stagedData.fileType,
         fileSize: stagedData.fileSize,
+        statementMonth: stagedData.statementMonth,
+        statementYear: stagedData.statementYear,
         transactions: toSave
       });
 
       if (res.data.success) {
         sessionStorage.removeItem('stagedImport');
         alert(res.data.message);
-        navigate('/dashboard');
+        navigate('/loans');
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to save confirmed transactions.');
@@ -117,6 +126,14 @@ const ImportReview = () => {
   if (!stagedData) return null;
 
   const duplicatesCount = transactions.filter(t => t.isDuplicate).length;
+  const loanTxns = transactions.filter(t => 
+    t.category === 'Loan' || 
+    /\b(loan|chitty|chitti|chit fund|gold loan|emi|interest|ksfe|kudumbasree|svep|hpl|payable|muthoot|manappuram)\b/i.test(`${t.merchant || ''} ${t.description || ''}`)
+  );
+
+  const billingPeriodLabel = stagedData.statementMonth && stagedData.statementYear
+    ? `${MONTH_NAMES[stagedData.statementMonth - 1]} ${stagedData.statementYear}`
+    : null;
 
   return (
     <div>
@@ -130,8 +147,29 @@ const ImportReview = () => {
             <ArrowLeft size={16} />
             <span>Upload Another File</span>
           </button>
-          <h1 style={{ fontSize: '1.75rem' }}>Review Extracted Transactions</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Review Extracted Transactions</h1>
+            {billingPeriodLabel && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  background: 'rgba(99, 102, 241, 0.15)',
+                  color: '#A5B4FC',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '999px',
+                  fontSize: '0.82rem',
+                  fontWeight: 600
+                }}
+              >
+                <Calendar size={13} />
+                Period: {billingPeriodLabel}
+              </span>
+            )}
+          </div>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.35rem' }}>
             File: <strong>{stagedData.fileName}</strong> • {transactions.length} items extracted • {duplicatesCount} duplicate warnings
           </p>
         </div>
@@ -151,11 +189,35 @@ const ImportReview = () => {
             disabled={committing || selectedIds.size === 0}
             className="btn btn-primary"
           >
-            <span>{committing ? 'Saving to MongoDB...' : `Confirm & Save (${selectedIds.size})`}</span>
+            <span>{committing ? 'Saving & Syncing...' : `Confirm & Save (${selectedIds.size})`}</span>
             <ArrowRight size={16} />
           </button>
         </div>
       </div>
+
+      {/* Loan Auto-Sync Notification Card */}
+      {loanTxns.length > 0 && (
+        <div
+          style={{
+            background: 'rgba(225, 29, 72, 0.1)',
+            border: '1px solid rgba(225, 29, 72, 0.3)',
+            color: '#FDA4AF',
+            padding: '0.85rem 1.25rem',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.85rem',
+            marginBottom: '1.25rem'
+          }}
+        >
+          <div style={{ background: 'rgba(225, 29, 72, 0.2)', padding: '0.4rem', borderRadius: '8px', color: '#F43F5E' }}>
+            <Landmark size={20} />
+          </div>
+          <div style={{ fontSize: '0.88rem', lineHeight: '1.4' }}>
+            <strong style={{ color: '#FFF' }}>{loanTxns.length} Loan / Chitty Commitments Detected:</strong> These transactions will automatically sync into your <strong>Loans & Debt Portfolio</strong>, updating facility balances or registering new commitments for {billingPeriodLabel || 'this period'}.
+          </div>
+        </div>
+      )}
 
       {/* Duplicate Alert Banner */}
       {duplicatesCount > 0 && (

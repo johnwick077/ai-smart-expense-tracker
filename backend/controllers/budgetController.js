@@ -47,6 +47,7 @@ const getBudgets = async (req, res, next) => {
 
       return {
         id: b._id,
+        _id: b._id,
         category: b.category,
         amount: b.amount,
         spent,

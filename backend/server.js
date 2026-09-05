@@ -17,6 +17,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const importRoutes = require('./routes/importRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const loanRoutes = require('./routes/loanRoutes');
 
 const app = express();
 
@@ -71,6 +72,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/import', importRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/loans', loanRoutes);
 
 // 404 handler for undefined routes
 app.use((req, res) => {

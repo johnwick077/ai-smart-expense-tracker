@@ -11,24 +11,88 @@ const PREDEFINED_CATEGORIES = [
   'Education',
   'Rent',
   'Travel',
+  'Loan',
   'Salary',
   'Other'
 ];
 
-// High-confidence heuristic keyword mapping (offline/fallback intelligence)
+// High-confidence heuristic keyword mapping (offline/fallback intelligence across all sectors)
 const HEURISTIC_KEYWORDS = {
-  Food: ['swiggy', 'zomato', 'mcdonald', 'kfc', 'starbucks', 'cafe', 'restaurant', 'burger', 'pizza', 'dine', 'supermarket', 'blinkit', 'zepto', 'instamart', 'groceries', 'bakery', 'tea', 'coffee'],
-  Hotel: ['hotel', 'marriott', 'hyatt', 'hilton', 'radisson', 'resort', 'stay', 'airbnb', 'oyo', 'taj', 'lodging', 'inn'],
-  Shopping: ['amazon', 'flipkart', 'myntra', 'zara', 'h&m', 'nike', 'adidas', 'apple', 'retail', 'mall', 'clothing', 'fashion', 'electronics', 'ikea'],
-  Transport: ['uber', 'ola', 'rapido', 'metro', 'fuel', 'petrol', 'diesel', 'shell', 'hpcl', 'bpcl', 'irctc', 'railway', 'flight', 'indigo', 'air india', 'toll', 'fastag', 'cab', 'auto'],
-  Bills: ['airtel', 'jio', 'vi', 'vodafone', 'bescom', 'electricity', 'water', 'gas', 'broadband', 'wifi', 'dth', 'tata play', 'utility', 'recharge', 'bill', 'insurance', 'lic'],
-  Entertainment: ['netflix', 'spotify', 'prime video', 'hotstar', 'youtube', 'pvr', 'inox', 'cinema', 'movie', 'bookmyshow', 'game', 'playstation', 'steam'],
-  Healthcare: ['apollo', 'pharmacy', 'chemist', 'hospital', 'clinic', 'doctor', 'medplus', '1mg', 'pharmeasy', 'dental', 'lab', 'diagnostics'],
-  Education: ['coursera', 'udemy', 'college', 'school', 'university', 'tuition', 'books', 'udacity', 'edx', 'course'],
-  Rent: ['rent', 'landlord', 'society', 'maintenance', 'flat rent', 'apartment'],
-  Travel: ['makemytrip', 'goibibo', 'easemytrip', 'booking.com', 'expedia', 'visa', 'tour'],
-  Salary: ['salary', 'payroll', 'wages', 'stipend', 'bonus', 'inflow', 'freelance payment']
+  Loan: [
+    'loan', 'loans', 'chitty', 'chitti', 'chitties', 'chit fund', 'chit', 'ksfe',
+    'gold loan', 'goldloan', 'interest', 'int.pd', 'int pd', 'int paid', 'emi',
+    'muthoot', 'manappuram', 'bajaj finance', 'finance', 'nbfc', 'repayment',
+    'principal', 'home loan', 'car loan', 'personal loan', 'term loan', 'debt',
+    'kudumbasree', 'svep', 'co-op loan'
+  ],
+  Hotel: [
+    'hotel', 'hotels', 'marriott', 'hyatt', 'hilton', 'radisson', 'resort',
+    'stay', 'airbnb', 'oyo', 'taj', 'lodging', 'inn', 'residency', 'suites', 'lodge'
+  ],
+  Food: [
+    'bakery', 'bakeries', 'bake', 'cakes', 'cake', 'pastry', 'patisserie', 'bread',
+    'buns', 'sweets', 'mithai', 'swiggy', 'zomato', 'mcdonald', 'kfc', 'starbucks',
+    'cafe', 'restaurant', 'burger', 'pizza', 'dine', 'blinkit', 'zepto',
+    'instamart', 'groceries', 'tea', 'coffee', 'food', 'canteen'
+  ],
+  Shopping: [
+    'silks', 'silk', 'textile', 'textiles', 'saree', 'sarees', 'pothys',
+    'kalyan silks', 'chennai silks', 'hypermarket', 'supermarket', 'mart',
+    'bazar', 'bazaar', 'big bazaar', 'big bazar', 'smart bazaar', 'palika bazar',
+    'meena bazaar', 'dmart', 'd-mart', 'lulu', 'amazon', 'flipkart', 'myntra',
+    'zara', 'h&m', 'nike', 'adidas', 'apple', 'retail', 'mall', 'clothing',
+    'fashion', 'electronics', 'ikea', 'reliance fresh', 'shoppers stop'
+  ],
+  Healthcare: [
+    'pharmacy', 'medicine', 'medicines', 'medical', 'chemist', 'medplus', 'apollo',
+    'apollo pharmacy', 'netmeds', 'pharmeasy', '1mg', 'tata 1mg', 'hospital',
+    'clinic', 'doctor', 'dr.', 'dentist', 'dental', 'lab', 'diagnostics',
+    'pathology', 'scan', 'mri', 'x-ray', 'physiotherapy', 'opticals', 'lenskart',
+    'health', 'ayurveda', 'homeopathy', 'druggist', 'meds'
+  ],
+  Transport: [
+    'uber', 'ola', 'rapido', 'metro', 'fuel', 'petrol', 'diesel', 'cng', 'shell',
+    'hpcl', 'bpcl', 'iocl', 'indian oil', 'bharat petroleum', 'irctc', 'railway',
+    'flight', 'indigo', 'air india', 'toll', 'fastag', 'cab', 'auto', 'bus', 'ksrtc'
+  ],
+  Bills: [
+    'airtel', 'jio', 'vi', 'vodafone', 'bsnl', 'bescom', 'kseb', 'tneb', 'electricity',
+    'electric', 'power', 'water', 'gas', 'indane', 'bharat gas', 'cylinder',
+    'broadband', 'wifi', 'dth', 'tata play', 'utility', 'recharge', 'bill',
+    'insurance', 'lic', 'premium', 'tax', 'maintenance'
+  ],
+  Entertainment: [
+    'netflix', 'spotify', 'prime video', 'hotstar', 'disney', 'youtube', 'pvr',
+    'inox', 'cinepolis', 'cinema', 'movie', 'bookmyshow', 'game', 'playstation', 'steam'
+  ],
+  Education: [
+    'coursera', 'udemy', 'college', 'school', 'university', 'tuition', 'books',
+    'fees', 'stationery', 'udacity', 'edx', 'course', 'exam', 'classes'
+  ],
+  Rent: [
+    'rent', 'landlord', 'society', 'maintenance', 'flat rent', 'apartment', 'house rent'
+  ],
+  Travel: [
+    'makemytrip', 'goibibo', 'easemytrip', 'booking.com', 'agoda', 'expedia', 'visa', 'tour', 'travels'
+  ],
+  Salary: [
+    'salary', 'payroll', 'wages', 'stipend', 'bonus', 'inflow', 'freelance payment'
+  ]
 };
+
+// Exact domain rules requested by user to guarantee 100% adherence
+const USER_PRIORITY_RULES = [
+  // 1. Loans, Chitty, Gold Loan, Interest
+  { keywords: ['chitty', 'chitti', 'chitties', 'chit fund', 'gold loan', 'goldloan', 'loan', 'loans', 'interest', 'int.pd', 'int pd', 'int paid', 'int debit', 'kudumbasree', 'svep'], category: 'Loan' },
+  // 2. Pharmacy, Medicine, Medical, Healthcare
+  { keywords: ['pharmacy', 'medicine', 'medicines', 'medical', 'chemist', 'apollo pharmacy', 'medplus', 'netmeds', 'pharmeasy', '1mg', 'hospital', 'clinic', 'druggist'], category: 'Healthcare' },
+  // 3. Silks, Hypermarket, Bazar
+  { keywords: ['silks', 'silk', 'hypermarket', 'supermarket', 'bazar', 'bazaar'], category: 'Shopping' },
+  // 4. Bakery
+  { keywords: ['bakery', 'bakeries', 'bakehouse'], category: 'Food' },
+  // 5. Hotel
+  { keywords: ['hotel', 'hotels'], category: 'Hotel' }
+];
 
 /**
  * Heuristic classifier for rapid fallback when AI API is unreachable
@@ -37,10 +101,20 @@ const classifyByHeuristics = (text) => {
   if (!text) return { category: 'Other', confidence: 0.5 };
   const lower = String(text).toLowerCase();
 
+  // Check strict user priority rules first (handles hypermarket over groceries, chitty, etc.)
+  for (const rule of USER_PRIORITY_RULES) {
+    for (const kw of rule.keywords) {
+      if (lower.includes(kw)) {
+        return { category: rule.category, confidence: 0.99 };
+      }
+    }
+  }
+
+  // Check general heuristic keywords
   for (const [cat, keywords] of Object.entries(HEURISTIC_KEYWORDS)) {
     for (const kw of keywords) {
       if (lower.includes(kw)) {
-        return { category: cat, confidence: 0.94 };
+        return { category: cat, confidence: 0.96 };
       }
     }
   }
@@ -86,10 +160,15 @@ You are an expert financial categorization AI engine.
 Categorize each of the following financial transaction descriptions into EXACTLY ONE of these categories:
 [${PREDEFINED_CATEGORIES.join(', ')}]
 
-Rules:
-1. Return ONLY a valid JSON array of objects. Do not include markdown wraps or explanations.
-2. Format: [{"id": 0, "category": "Food", "confidence": 0.95}]
-3. If uncertain, categorize as "Other" with confidence 0.50.
+Domain Rules:
+1. Words like "silks", "silk", "textiles", "saree", "hypermarket", "supermarket", "bazar", "bazaar", "mart", "mall" MUST be categorized as "Shopping".
+2. Words like "bakery", "bake", "cakes", "pastry", "bread", "cafe", "restaurant", "food", "dine" MUST be categorized as "Food".
+3. Words like "hotel", "hotels", "residency", "inn", "lodge", "resort", "stay", "suites" MUST be categorized as "Hotel".
+4. Words like "chitty", "chitti", "chit fund", "loan", "gold loan", "interest", "int.pd", "emi", "muthoot", "ksfe", "finance" MUST be categorized as "Loan".
+5. Words like "pharmacy", "medicine", "medicines", "medical", "chemist", "apollo", "medplus", "1mg", "pharmeasy", "hospital", "clinic", "doctor" MUST be categorized as "Healthcare".
+6. Return ONLY a valid JSON array of objects. Do not include markdown wraps or explanations.
+7. Format: [{"id": 0, "category": "Food", "confidence": 0.95}]
+8. If uncertain, categorize as "Other" with confidence 0.50.
 
 Transactions to categorize:
 ${JSON.stringify(uniqueEntries.map(e => ({ id: e.id, text: e.description || e.merchant })))}
@@ -120,6 +199,19 @@ ${JSON.stringify(uniqueEntries.map(e => ({ id: e.id, text: e.description || e.me
 
   // Apply categories (from Gemini or heuristic fallback) back to all transactions
   return transactions.map(txn => {
+    const fullText = `${txn.description || ''} ${txn.merchant || ''}`;
+    const heuristic = classifyByHeuristics(fullText);
+
+    // If deterministic domain heuristic matched high-priority keywords, enforce it
+    if (heuristic.confidence >= 0.95) {
+      return {
+        ...txn,
+        category: heuristic.category,
+        aiCategorized: true,
+        aiConfidence: heuristic.confidence
+      };
+    }
+
     const key = (txn.merchant || txn.description || 'Unknown').trim().toLowerCase();
     const aiResult = categoryResults.get(key);
 
@@ -133,10 +225,9 @@ ${JSON.stringify(uniqueEntries.map(e => ({ id: e.id, text: e.description || e.me
     }
 
     // Heuristic fallback
-    const heuristic = classifyByHeuristics(`${txn.description} ${txn.merchant}`);
     return {
       ...txn,
-      category: heuristic.category,
+      category: heuristic.category !== 'Other' ? heuristic.category : (txn.category || 'Other'),
       aiCategorized: true,
       aiConfidence: heuristic.confidence
     };

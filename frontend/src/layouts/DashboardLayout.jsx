@@ -18,7 +18,8 @@ import {
   Menu,
   X,
   FileSpreadsheet,
-  Plus
+  Plus,
+  Landmark
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -38,6 +39,7 @@ const DashboardLayout = () => {
     { label: 'Income', path: '/income', icon: TrendingUp },
     { label: 'Budgets', path: '/budgets', icon: Target },
     { label: 'Savings Goals', path: '/goals', icon: PiggyBank },
+    { label: 'Loans & Debt', path: '/loans', icon: Landmark },
     { label: 'Analytics', path: '/analytics', icon: PieChart },
     { divider: true },
     { label: 'Import Statement', path: '/import', icon: UploadCloud },

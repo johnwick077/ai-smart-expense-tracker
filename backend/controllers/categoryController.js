@@ -11,6 +11,7 @@ const DEFAULT_CATEGORIES = [
   { name: 'Education', type: 'expense', color: '#6366F1', icon: 'GraduationCap' },
   { name: 'Rent', type: 'expense', color: '#14B8A6', icon: 'Home' },
   { name: 'Travel', type: 'expense', color: '#0EA5E9', icon: 'Plane' },
+  { name: 'Loan', type: 'expense', color: '#E11D48', icon: 'Landmark' },
   { name: 'Salary', type: 'income', color: '#22C55E', icon: 'Briefcase' },
   { name: 'Other', type: 'both', color: '#6B7280', icon: 'Tag' }
 ];

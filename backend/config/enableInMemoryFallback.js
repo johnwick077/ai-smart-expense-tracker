@@ -8,6 +8,7 @@ const Budget = require('../models/Budget');
 const SavingsGoal = require('../models/SavingsGoal');
 const Category = require('../models/Category');
 const ImportHistory = require('../models/ImportHistory');
+const Loan = require('../models/Loan');
 
 const enableInMemoryFallback = async () => {
   console.log('[InMemory Fallback] Activating resilient in-memory database fallback with pre-seeded demo accounts...');
@@ -60,23 +61,17 @@ const enableInMemoryFallback = async () => {
         paymentMethod: 'UPI',
         date: new Date('2026-09-01'),
         isImported: true,
-        sourceFile: { fileName: 'Sept_Statement.pdf', fileType: 'pdf' }
-      },
-      {
-        _id: 'exp005',
-        userId: 'demo_user_id',
-        title: 'Electricity & Wi-Fi Bill',
-        merchant: 'Airtel Broadband',
-        amount: 1099.00,
-        category: 'Bills',
-        paymentMethod: 'Net Banking',
-        date: new Date('2026-08-30'),
-        isImported: false
+        paymentMethod: 'Debit Card',
+        date: new Date('2026-09-01'),
+        isImported: false,
+        aiCategorized: true,
+        aiConfidence: 0.91
       }
     ],
     incomes: [
       {
         _id: 'inc001',
+        id: 'inc001',
         userId: 'demo_user_id',
         source: 'Primary Tech Salary',
         amount: 40000.00,
@@ -86,6 +81,7 @@ const enableInMemoryFallback = async () => {
       },
       {
         _id: 'inc002',
+        id: 'inc002',
         userId: 'demo_user_id',
         source: 'Freelance UI Design',
         amount: 12000.00,
@@ -95,14 +91,15 @@ const enableInMemoryFallback = async () => {
       }
     ],
     budgets: [
-      { _id: 'bgt001', userId: 'demo_user_id', category: 'Food', amount: 8000, month: 9, year: 2026 },
-      { _id: 'bgt002', userId: 'demo_user_id', category: 'Hotel', amount: 8000, month: 9, year: 2026 },
-      { _id: 'bgt003', userId: 'demo_user_id', category: 'Shopping', amount: 5000, month: 9, year: 2026 },
-      { _id: 'bgt004', userId: 'demo_user_id', category: 'Transport', amount: 4000, month: 9, year: 2026 }
+      { _id: 'bgt001', id: 'bgt001', userId: 'demo_user_id', category: 'Food', amount: 8000, month: 9, year: 2026 },
+      { _id: 'bgt002', id: 'bgt002', userId: 'demo_user_id', category: 'Hotel', amount: 8000, month: 9, year: 2026 },
+      { _id: 'bgt003', id: 'bgt003', userId: 'demo_user_id', category: 'Shopping', amount: 5000, month: 9, year: 2026 },
+      { _id: 'bgt004', id: 'bgt004', userId: 'demo_user_id', category: 'Transport', amount: 4000, month: 9, year: 2026 }
     ],
     goals: [
       {
         _id: 'goal001',
+        id: 'goal001',
         userId: 'demo_user_id',
         title: 'Emergency Reserve 2026',
         targetAmount: 100000,
@@ -112,6 +109,7 @@ const enableInMemoryFallback = async () => {
       },
       {
         _id: 'goal002',
+        id: 'goal002',
         userId: 'demo_user_id',
         title: 'New Laptop',
         targetAmount: 60000,
@@ -130,8 +128,194 @@ const enableInMemoryFallback = async () => {
       { name: 'Education', type: 'expense', color: '#6366F1', icon: 'GraduationCap', isDefault: true },
       { name: 'Rent', type: 'expense', color: '#14B8A6', icon: 'Home', isDefault: true },
       { name: 'Travel', type: 'expense', color: '#0EA5E9', icon: 'Plane', isDefault: true },
+      { name: 'Loan', type: 'expense', color: '#E11D48', icon: 'Landmark', isDefault: true },
       { name: 'Salary', type: 'income', color: '#22C55E', icon: 'Briefcase', isDefault: true },
       { name: 'Other', type: 'both', color: '#6B7280', icon: 'Tag', isDefault: true }
+    ],
+    loans: [
+      {
+        _id: 'loan000',
+        id: 'loan000',
+        userId: 'demo_user_id',
+        name: 'Primary Property / Housing Loan',
+        category: 'loan',
+        lender: 'Co-op',
+        principalAmount: 625000,
+        monthlyEMI: 0,
+        paidAmount: 0,
+        paidThisMonth: 0,
+        remainingBalance: 625000,
+        interestRate: 8.5,
+        status: 'active'
+      },
+      {
+        _id: 'loan001',
+        userId: 'demo_user_id',
+        name: 'HPL Joel',
+        category: 'loan',
+        lender: 'Co-op',
+        principalAmount: 11948,
+        monthlyEMI: 2800,
+        paidAmount: 2800,
+        paidThisMonth: 2800,
+        remainingBalance: 9148,
+        interestRate: 8.5,
+        status: 'active'
+      },
+      {
+        _id: 'loan002',
+        userId: 'demo_user_id',
+        name: 'HPL Shyla',
+        category: 'loan',
+        lender: 'Co-op',
+        principalAmount: 10504,
+        monthlyEMI: 1500,
+        paidAmount: 1500,
+        paidThisMonth: 1500,
+        remainingBalance: 9004,
+        interestRate: 8.5,
+        status: 'active'
+      },
+      {
+        _id: 'loan003',
+        userId: 'demo_user_id',
+        name: 'Kudumbasree Loan',
+        category: 'loan',
+        lender: 'Co-op',
+        principalAmount: 48000,
+        monthlyEMI: 5000,
+        paidAmount: 8000,
+        paidThisMonth: 5000,
+        remainingBalance: 40000,
+        interestRate: 7.0,
+        status: 'active'
+      },
+      {
+        _id: 'loan004',
+        userId: 'demo_user_id',
+        name: 'SVEP Loan',
+        category: 'loan',
+        lender: 'Co-op',
+        principalAmount: 27596,
+        monthlyEMI: 1300,
+        paidAmount: 1300,
+        paidThisMonth: 1300,
+        remainingBalance: 26296,
+        interestRate: 7.5,
+        status: 'active'
+      },
+      {
+        _id: 'loan005',
+        userId: 'demo_user_id',
+        name: 'Canara Gold Loan',
+        category: 'loan',
+        lender: 'Canara',
+        principalAmount: 80000,
+        monthlyEMI: 0,
+        paidAmount: 0,
+        paidThisMonth: 0,
+        remainingBalance: 80000,
+        interestRate: 8.5,
+        status: 'active'
+      },
+      {
+        _id: 'loan006',
+        userId: 'demo_user_id',
+        name: 'Minto Aunty',
+        category: 'loan',
+        lender: 'Personal',
+        principalAmount: 55000,
+        monthlyEMI: 0,
+        paidAmount: 0,
+        paidThisMonth: 0,
+        remainingBalance: 55000,
+        interestRate: 0.0,
+        status: 'active'
+      },
+      {
+        _id: 'loan007',
+        userId: 'demo_user_id',
+        name: 'KSFE Chitty 1',
+        category: 'chitty',
+        lender: 'KSFE',
+        principalAmount: 810000,
+        monthlyEMI: 30000,
+        paidAmount: 30000,
+        paidThisMonth: 0,
+        remainingBalance: 780000,
+        interestRate: 0.0,
+        status: 'active'
+      },
+      {
+        _id: 'loan008',
+        userId: 'demo_user_id',
+        name: 'KSFE Chitty 2',
+        category: 'chitty',
+        lender: 'KSFE',
+        principalAmount: 20000,
+        monthlyEMI: 2500,
+        paidAmount: 2500,
+        paidThisMonth: 0,
+        remainingBalance: 17500,
+        interestRate: 0.0,
+        status: 'active'
+      },
+      {
+        _id: 'loan009',
+        userId: 'demo_user_id',
+        name: 'KSFE Chitty 3',
+        category: 'chitty',
+        lender: 'KSFE',
+        principalAmount: 62500,
+        monthlyEMI: 2500,
+        paidAmount: 2500,
+        paidThisMonth: 0,
+        remainingBalance: 60000,
+        interestRate: 0.0,
+        status: 'active'
+      },
+      {
+        _id: 'loan010',
+        userId: 'demo_user_id',
+        name: 'Co-op ₹10 Lakh Chitty',
+        category: 'chitty',
+        lender: 'Co-op',
+        principalAmount: 370000,
+        monthlyEMI: 10000,
+        paidAmount: 10000,
+        paidThisMonth: 0,
+        remainingBalance: 360000,
+        interestRate: 0.0,
+        status: 'active'
+      },
+      {
+        _id: 'loan011',
+        userId: 'demo_user_id',
+        name: 'LIC Insurance/Investment',
+        category: 'investment',
+        lender: 'LIC',
+        principalAmount: 8800,
+        monthlyEMI: 2200,
+        paidAmount: 2200,
+        paidThisMonth: 0,
+        remainingBalance: 6600,
+        interestRate: 0.0,
+        status: 'active'
+      },
+      {
+        _id: 'loan012',
+        userId: 'demo_user_id',
+        name: 'Jeevakarunya Balance Payable',
+        category: 'payable',
+        lender: 'Jeevakarunya',
+        principalAmount: 15000,
+        monthlyEMI: 15000,
+        paidAmount: 2000,
+        paidThisMonth: 2000,
+        remainingBalance: 13000,
+        interestRate: 0.0,
+        status: 'active'
+      }
     ],
     imports: [
       {
@@ -257,14 +441,21 @@ const enableInMemoryFallback = async () => {
     };
     return queryObj;
   };
-  Expense.findOne = async (q = {}) => db.expenses.find(e => q._id ? String(e._id) === String(q._id) : true) || null;
+  const matchesId = (item, q) => {
+    if (!item || !q) return false;
+    const targetId = typeof q === 'string' ? q : (q._id || q.id || (q.$or ? (q.$or[0]._id || q.$or[0].id) : null));
+    if (!targetId) return false;
+    return String(item._id) === String(targetId) || String(item.id) === String(targetId);
+  };
+
+  Expense.findOne = async (q = {}) => db.expenses.find(e => q._id ? matchesId(e, q) : true) || null;
   Expense.findByIdAndUpdate = async (id, upd) => {
-    const item = db.expenses.find(e => String(e._id) === String(id));
+    const item = db.expenses.find(e => matchesId(e, id));
     if (item && upd.$set) Object.assign(item, upd.$set);
     return item;
   };
   Expense.findOneAndDelete = async (q) => {
-    const idx = db.expenses.findIndex(e => String(e._id) === String(q._id));
+    const idx = db.expenses.findIndex(e => matchesId(e, q));
     return idx !== -1 ? db.expenses.splice(idx, 1)[0] : null;
   };
   Expense.countDocuments = async () => db.expenses.length;
@@ -291,14 +482,14 @@ const enableInMemoryFallback = async () => {
     };
     return queryObj;
   };
-  Income.findOne = async (q = {}) => db.incomes.find(i => q._id ? String(i._id) === String(q._id) : true) || null;
+  Income.findOne = async (q = {}) => db.incomes.find(i => q._id ? matchesId(i, q) : true) || null;
   Income.findByIdAndUpdate = async (id, upd) => {
-    const item = db.incomes.find(i => String(i._id) === String(id));
+    const item = db.incomes.find(i => matchesId(i, id));
     if (item && upd.$set) Object.assign(item, upd.$set);
     return item;
   };
   Income.findOneAndDelete = async (q) => {
-    const idx = db.incomes.findIndex(i => String(i._id) === String(q._id));
+    const idx = db.incomes.findIndex(i => matchesId(i, q));
     return idx !== -1 ? db.incomes.splice(idx, 1)[0] : null;
   };
   Income.countDocuments = async () => db.incomes.length;
@@ -317,7 +508,7 @@ const enableInMemoryFallback = async () => {
     return b;
   };
   Budget.findOneAndDelete = async (q) => {
-    const idx = db.budgets.findIndex(b => String(b._id) === String(q._id));
+    const idx = db.budgets.findIndex(b => matchesId(b, q));
     return idx !== -1 ? db.budgets.splice(idx, 1)[0] : null;
   };
 
@@ -332,17 +523,17 @@ const enableInMemoryFallback = async () => {
     return g;
   };
   SavingsGoal.findOne = async (q) => {
-    const g = db.goals.find(goal => String(goal._id) === String(q._id));
+    const g = db.goals.find(goal => matchesId(goal, q));
     if (g) g.save = async function () { return this; };
     return g || null;
   };
   SavingsGoal.findByIdAndUpdate = async (id, upd) => {
-    const g = db.goals.find(goal => String(goal._id) === String(id));
+    const g = db.goals.find(goal => matchesId(goal, id));
     if (g && upd.$set) Object.assign(g, upd.$set);
     return g;
   };
   SavingsGoal.findOneAndDelete = async (q) => {
-    const idx = db.goals.findIndex(g => String(g._id) === String(q._id));
+    const idx = db.goals.findIndex(g => matchesId(g, q));
     return idx !== -1 ? db.goals.splice(idx, 1)[0] : null;
   };
 
@@ -373,12 +564,51 @@ const enableInMemoryFallback = async () => {
     sort: () => db.imports,
     then: (res) => res(db.imports)
   });
-  ImportHistory.findOne = async (q) => db.imports.find(i => String(i._id) === String(q._id)) || null;
+  ImportHistory.findOne = async (q) => db.imports.find(i => matchesId(i, q)) || null;
   ImportHistory.findOneAndDelete = async (q) => {
-    const idx = db.imports.findIndex(i => String(i._id) === String(q._id));
+    const idx = db.imports.findIndex(i => matchesId(i, q));
     return idx !== -1 ? db.imports.splice(idx, 1)[0] : null;
   };
   ImportHistory.countDocuments = async () => db.imports.length;
+
+  // Patch Loan Model
+  Loan.find = () => ({
+    sort: () => db.loans,
+    then: (res) => res(db.loans)
+  });
+  Loan.findById = async (id) => db.loans.find(l => matchesId(l, id)) || null;
+  Loan.findByIdAndUpdate = async (id, upd) => {
+    const item = db.loans.find(l => matchesId(l, id));
+    if (item && upd.$set) Object.assign(item, upd.$set);
+    return item;
+  };
+  Loan.create = async (d) => {
+    const newId = createId();
+    const l = { _id: newId, id: newId, ...d, createdAt: new Date() };
+    db.loans.push(l);
+    return l;
+  };
+  Loan.findOne = async (q) => {
+    let l = db.loans.find(loan => matchesId(loan, q));
+    if (!l && q && q.$or) {
+      l = db.loans.find(loan => {
+        return q.$or.some(cond => {
+          if (cond.name && cond.name instanceof RegExp) return cond.name.test(loan.name);
+          if (cond.lender && cond.lender instanceof RegExp) return cond.lender.test(loan.lender);
+          return false;
+        });
+      });
+    }
+    if (l) {
+      l.save = async function () { return this; };
+    }
+    return l || null;
+  };
+  Loan.findOneAndDelete = async (q) => {
+    const idx = db.loans.findIndex(l => matchesId(l, q));
+    return idx !== -1 ? db.loans.splice(idx, 1)[0] : null;
+  };
+  Loan.countDocuments = async () => db.loans.length;
 
   console.log('[InMemory Fallback] Demo User ready: joel.user@example.com (Password123!)');
   console.log('[InMemory Fallback] Demo Admin ready: admin@expensetracker.ai (AdminSecure123!)');

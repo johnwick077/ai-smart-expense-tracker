@@ -1,6 +1,7 @@
 const XLSX = require('xlsx');
 const Papa = require('papaparse');
 const pdfParse = require('pdf-parse');
+const { classifyByHeuristics } = require('./aiService');
 
 // Fuzzy column synonyms dictionary
 const HEADER_SYNONYMS = {
@@ -376,6 +377,12 @@ const normalizeRawRows = (rawRows, sourceFileName, sourceFileType) => {
     const finalDescription = descVal || merchantVal || 'Verified Transaction';
     const finalMerchant = merchantVal || extractMerchant(finalDescription);
 
+    const heuristic = classifyByHeuristics(`${finalDescription} ${finalMerchant}`);
+    let assignedCategory = categoryVal;
+    if (!assignedCategory || ['other', 'uncategorized', 'unknown', 'general', ''].includes(String(assignedCategory).trim().toLowerCase()) || heuristic.confidence >= 0.95) {
+      assignedCategory = heuristic.category || 'Other';
+    }
+
     normalized.push({
       date: parseDate(dateVal),
       description: finalDescription,
@@ -383,7 +390,7 @@ const normalizeRawRows = (rawRows, sourceFileName, sourceFileType) => {
       amount: amountVal,
       type: typeVal,
       paymentMethod,
-      category: categoryVal || 'Other',
+      category: assignedCategory || 'Other',
       sourceFile: {
         fileName: sourceFileName,
         fileType: sourceFileType

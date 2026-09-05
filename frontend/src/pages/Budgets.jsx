@@ -4,7 +4,7 @@ import api from '../services/api';
 
 const CATEGORIES = [
   'Food', 'Hotel', 'Shopping', 'Transport', 'Bills',
-  'Entertainment', 'Healthcare', 'Education', 'Rent', 'Travel', 'Other'
+  'Entertainment', 'Healthcare', 'Education', 'Rent', 'Travel', 'Loan', 'Other'
 ];
 
 const Budgets = () => {
@@ -245,7 +245,7 @@ const Budgets = () => {
                   {b.remaining >= 0 ? `Safe Remaining: ₹${b.remaining.toLocaleString('en-IN')}` : `Deficit: -₹${Math.abs(b.remaining).toLocaleString('en-IN')}`}
                 </span>
                 <button
-                  onClick={() => handleDelete(b.id)}
+                  onClick={() => handleDelete(b._id || b.id)}
                   style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
                 >
                   Remove

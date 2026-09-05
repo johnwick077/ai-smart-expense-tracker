@@ -1,8 +1,13 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import { UploadCloud, FileText, CheckCircle2, AlertCircle, ArrowRight, Loader2, Sparkles } from 'lucide-react';
+import { UploadCloud, FileText, CheckCircle2, AlertCircle, ArrowRight, Loader2, Sparkles, Calendar } from 'lucide-react';
 import api from '../services/api';
+
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
 
 const ImportData = () => {
   const navigate = useNavigate();
@@ -10,6 +15,10 @@ const ImportData = () => {
   const [uploading, setUploading] = useState(false);
   const [progressPhase, setProgressPhase] = useState('');
   const [error, setError] = useState('');
+  
+  // Statement billing cycle selector (default: current month and year)
+  const [statementMonth, setStatementMonth] = useState(9); // September
+  const [statementYear, setStatementYear] = useState(2026);
 
   const onDrop = useCallback((acceptedFiles, rejectedFiles) => {
     setError('');
@@ -46,9 +55,11 @@ const ImportData = () => {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('statementMonth', statementMonth);
+      formData.append('statementYear', statementYear);
 
       setTimeout(() => setProgressPhase('Extracting rows & normalizing bank headers...'), 700);
-      setTimeout(() => setProgressPhase('🧠 Gemini AI analyzing merchants & predicting categories...'), 1400);
+      setTimeout(() => setProgressPhase('🧠 Gemini AI analyzing merchants, loans & predicting categories...'), 1400);
 
       const res = await api.post('/import/upload', formData, {
         headers: {
@@ -57,8 +68,13 @@ const ImportData = () => {
       });
 
       if (res.data.success) {
-        // Save extracted staging data to sessionStorage for review
-        sessionStorage.setItem('stagedImport', JSON.stringify(res.data.data));
+        // Save extracted staging data to sessionStorage for review, including chosen cycle
+        const stagePayload = {
+          ...res.data.data,
+          statementMonth,
+          statementYear
+        };
+        sessionStorage.setItem('stagedImport', JSON.stringify(stagePayload));
         navigate('/import/review');
       }
     } catch (err) {
@@ -71,13 +87,78 @@ const ImportData = () => {
 
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
+      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
         <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
-          Import Financial Statements & Receipts
+          Import Financial Statements & Ledger
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
           Drop your bank statement, export file, or ledger. Gemini AI automatically extracts dates, merchants, and smart categories for your review.
         </p>
+      </div>
+
+      {/* Statement Billing Cycle Selector */}
+      <div
+        className="card"
+        style={{
+          marginBottom: '1.5rem',
+          background: 'rgba(30, 41, 59, 0.6)',
+          border: '1px solid rgba(99, 102, 241, 0.25)',
+          padding: '1.15rem 1.5rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: 'rgba(99, 102, 241, 0.15)',
+              color: 'var(--primary-500)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <Calendar size={22} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '0.98rem', color: '#FFF' }}>
+              Target Statement Month & Billing Period
+            </div>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              Select which month this statement represents (e.g. September 2026) for accurate loan & expense attribution
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <select
+            value={statementMonth}
+            onChange={(e) => setStatementMonth(Number(e.target.value))}
+            className="input-field"
+            style={{ width: 'auto', minWidth: '140px', padding: '0.5rem 0.85rem' }}
+          >
+            {MONTH_NAMES.map((name, idx) => (
+              <option key={idx + 1} value={idx + 1}>{name}</option>
+            ))}
+          </select>
+
+          <select
+            value={statementYear}
+            onChange={(e) => setStatementYear(Number(e.target.value))}
+            className="input-field"
+            style={{ width: 'auto', minWidth: '100px', padding: '0.5rem 0.85rem' }}
+          >
+            {[2024, 2025, 2026, 2027].map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {error && (
