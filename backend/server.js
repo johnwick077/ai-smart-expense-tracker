@@ -72,7 +72,6 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/import', importRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/loans', loanRoutes);
 
 // 404 handler for undefined routes
 app.use((req, res) => {
