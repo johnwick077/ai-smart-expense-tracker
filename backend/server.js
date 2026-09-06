@@ -27,18 +27,19 @@ app.use(helmet({
 }));
 
 const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:5173',
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173'
-];
+].filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl/Postman)
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (like mobile apps, curl, render health checks)
+    if (!origin || allowedOrigins.includes(origin) || (origin && origin.endsWith('.vercel.app'))) {
       return callback(null, true);
     }
-    return callback(null, true); // Allow during development
+    return callback(null, true); // Allow during testing
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -72,6 +73,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/import', importRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/loans', loanRoutes);
 
 // 404 handler for undefined routes
 app.use((req, res) => {
@@ -93,7 +95,7 @@ if (process.env.NODE_ENV !== 'test') {
       console.warn(`[MongoDB] Initial connection warning: ${err.message}`);
     })
     .finally(() => {
-      app.listen(PORT, () => {
+      app.listen(PORT, '0.0.0.0', () => {
         console.log(`[Server] AI Smart Expense Tracker API running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode.`);
       });
     });
